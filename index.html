@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e4d2c">
+  <meta name="description" content="Tanda de penales pixel art contra Nico, el arquero número 9.">
+  <title>Penales con Nico</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9' shape-rendering='crispEdges'%3E%3Crect x='2' width='5' height='9' fill='%2315151d'/%3E%3Crect y='2' width='9' height='5' fill='%2315151d'/%3E%3Crect x='1' y='1' width='7' height='7' fill='%2315151d'/%3E%3Crect x='2' y='1' width='5' height='7' fill='%23fff'/%3E%3Crect x='1' y='2' width='7' height='5' fill='%23fff'/%3E%3Crect x='3' y='3' width='3' height='2' fill='%2322222c'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Montserrat:wght@400&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===================== INTRO ===================== -->
+  <section id="screen-intro" class="screen active" aria-label="Inicio">
+    <div class="wrap">
+      <h1 class="title">PENALES CON NICO<small>¿PODRÁS VENCER AL 9?</small><span class="invite">TE ESPERO EN MI CUMPLEAÑOS PARA JUGAR DE VERDAD</span></h1>
+
+      <div class="intro-body">
+        <div class="stage" id="stage-intro">
+          <div class="canvas-box"><canvas id="cv-intro" aria-label="Nico, el arquero, te explica el juego"></canvas></div>
+        </div>
+
+        <div class="intro-side">
+          <ul class="rules" aria-label="Reglas de puntos">
+            <li class="rule">
+              <div class="ico-row" aria-hidden="true"><i class="ico-ball"></i><i class="ico-ball"></i><i class="ico-ball"></i></div>
+              <b>HAT-TRICK</b><em class="plus">+3</em>
+            </li>
+            <li class="rule">
+              <div class="ico-row" aria-hidden="true"><i class="ico-card y"></i></div>
+              <b>2 ATAJADAS SEGUIDAS</b><em class="minus">-2</em>
+            </li>
+            <li class="rule">
+              <div class="ico-row" aria-hidden="true"><i class="ico-card y"></i><i class="ico-card y"></i><span class="eq">=</span><i class="ico-card r"></i></div>
+              <b>ROJA: FIN DEL JUEGO</b><em class="minus">-3</em>
+            </li>
+          </ul>
+
+          <div class="dialog" id="dialog" role="button" tabindex="0" aria-live="polite">
+            <span class="dialog-name">NICO</span>
+            <button type="button" class="skip" id="btn-skip">SALTAR</button>
+            <p class="dialog-text" id="dialog-text"></p>
+            <span class="next" id="dialog-next" hidden></span>
+          </div>
+
+          <form class="name-form" id="name-form" hidden autocomplete="off">
+            <label for="name-input">¿CÓMO TE LLAMAS?</label>
+            <div class="name-row">
+              <input id="name-input" class="name-input" type="text" maxlength="20"
+                     placeholder="TU NOMBRE" spellcheck="false" autocapitalize="characters" enterkeyhint="go">
+              <button type="submit" class="btn btn-play">JUGAR CON NICO</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== JUEGO ===================== -->
+  <section id="screen-game" class="screen" aria-label="Juego">
+    <div class="wrap">
+      <header class="hud">
+        <div class="hud-title"><span id="hud-name">JUGADOR</span> VS NICO 9 <i class="card-icon" id="hud-card" hidden title="Tarjeta amarilla"></i></div>
+        <div class="hud-stats">
+          <div class="hud-box timer" id="hud-timer"><span class="lbl">TIEMPO</span><span class="val" id="hud-time">1:30</span></div>
+          <div class="hud-box"><span class="lbl">GOLES</span><span class="val" id="hud-goals">0</span></div>
+          <div class="hud-box pts"><span class="lbl">PUNTOS</span><span class="val" id="hud-points">0</span></div>
+          <button type="button" class="mute" id="btn-mute" aria-label="Silenciar sonido">
+            <svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
+              <path d="M1 4h2l3-3v10l-3-3H1z" fill="currentColor"/>
+              <g class="waves" fill="currentColor"><rect x="8" y="4" width="1" height="4"/><rect x="10" y="2" width="1" height="8"/></g>
+              <g class="cross" fill="currentColor"><rect x="8" y="4" width="1" height="1"/><rect x="9" y="5" width="1" height="2"/><rect x="10" y="4" width="1" height="1"/><rect x="8" y="7" width="1" height="1"/><rect x="10" y="7" width="1" height="1"/></g>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="play">
+        <div class="stage" id="stage-game">
+          <div class="canvas-box">
+            <canvas id="cv-game" aria-label="Arco con Nico y el balón"></canvas>
+            <div class="overlay" id="overlay" aria-live="assertive"></div>
+            <div class="bubble say" id="say" hidden aria-live="assertive">
+              <span class="bubble-main" id="say-main"></span>
+              <span class="bubble-sub" id="say-sub"></span>
+            </div>
+            <button type="button" class="btn btn-play event-btn" id="btn-continue" hidden>CONTINUAR</button>
+          </div>
+        </div>
+
+        <div class="pad pad-aim">
+          <button type="button" class="btn btn-arrow" id="btn-left" aria-label="Apuntar a la izquierda">
+            <svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M5 1h1v6H5V6H4V5H3V3h1V2h1z" fill="currentColor"/></svg>
+          </button>
+          <button type="button" class="btn btn-arrow" id="btn-right" aria-label="Apuntar a la derecha">
+            <svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h1v1h1v1h1v2H4v1H3v1H2z" fill="currentColor"/></svg>
+          </button>
+        </div>
+        <div class="pad pad-kick">
+          <button type="button" class="btn btn-kick" id="btn-kick">PATEAR</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FINAL ===================== -->
+  <section id="screen-end" class="screen" aria-label="Resultado">
+    <div class="wrap">
+      <h2 class="title" id="end-title">¡FIN DEL PARTIDO!</h2>
+
+      <div class="end-top">
+        <div class="stage" id="stage-end">
+          <div class="canvas-box">
+            <canvas id="cv-end" aria-label="Nico al final del partido"></canvas>
+            <div class="bubble" id="record-bubble" hidden>
+              <span class="bubble-main">¡SIIIUUUUUU!</span>
+              <span class="bubble-sub">¡ROMPISTE EL RÉCORD!</span>
+            </div>
+          </div>
+        </div>
+        <div class="dialog dialog-static">
+          <span class="dialog-name">NICO</span>
+          <p class="dialog-text" id="end-text"></p>
+        </div>
+      </div>
+
+      <div class="record" id="new-record" hidden>¡NUEVO RÉCORD!</div>
+
+      <div class="stats">
+        <div class="hud-box pts"><span class="lbl">PUNTOS</span><span class="val" id="st-points">0</span></div>
+        <div class="hud-box"><span class="lbl">GOLES</span><span class="val" id="st-goals">0</span></div>
+        <div class="hud-box"><span class="lbl">TIROS</span><span class="val" id="st-shots">0</span></div>
+        <div class="hud-box"><span class="lbl">PUNTERÍA</span><span class="val" id="st-acc">0%</span></div>
+      </div>
+
+      <div class="ranking">
+        <h3>RANKING</h3>
+        <ol id="rank-list"></ol>
+        <p class="note" id="rank-note">PUNTAJES DE ESTE DISPOSITIVO</p>
+      </div>
+
+      <div class="end-actions">
+        <button type="button" class="btn btn-play" id="btn-again">JUGAR OTRA VEZ</button>
+        <button type="button" class="btn" id="btn-rename">CAMBIAR JUGADOR</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PREMIACIÓN (21 nov 2026, 4–9 pm) ===================== -->
+  <section id="screen-awards" class="screen" aria-label="Premiación">
+    <div class="wrap">
+      <h2 class="title">¡TERMINÓ EL TORNEO!<small>EL JUEGO VUELVE A LAS 9:00 PM</small></h2>
+
+      <div class="stage awards-stage" id="stage-awards">
+        <div class="canvas-box">
+          <canvas id="cv-awards" aria-label="Podio con los 3 mejores puntajes"></canvas>
+          <div id="pod-labels"></div>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-play" id="btn-winners">VER GANADORES</button>
+
+      <div class="ranking awards-list">
+        <h3>TODOS LOS PUNTAJES</h3>
+        <ol id="awards-list"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CRÉDITOS ===================== -->
+  <footer class="credit">
+    <button type="button" class="rank-open" id="btn-ranking" hidden>VER RANKING</button>
+    <button type="button" class="credit-link" id="btn-credit">Creado por: Mi tío Pipe</button>
+  </footer>
+
+  <div class="photo-modal" id="rank-modal" hidden role="dialog" aria-modal="true" aria-label="Ranking">
+    <div class="rank-pop">
+      <button type="button" class="photo-close" id="rank-close" aria-label="Cerrar ranking">X</button>
+      <div class="ranking rank-pop-box">
+        <h3>RANKING</h3>
+        <ol id="rank-pop-list"></ol>
+        <p class="note" id="rank-pop-note"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="photo-modal" id="photo-modal" hidden role="dialog" aria-modal="true" aria-label="Foto de Nico con su tío Pipe">
+    <div class="photo-frame">
+      <button type="button" class="photo-close" id="photo-close" aria-label="Cerrar foto">X</button>
+      <div class="photo-pic">
+        <canvas id="cv-photo" aria-label="Nico y su tío Pipe se dan la mano y celebran"></canvas>
+        <span class="photo-siu" id="photo-siu" hidden>SIIUUUU</span>
+      </div>
+      <p class="photo-caption">NICO &amp; TÍO PIPE</p>
+    </div>
+  </div>
+
+  <!-- Firebase (si no carga, el ranking funciona en modo local) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/names.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/ranking.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

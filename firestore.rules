@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// Reglas de Firestore para "Penales con Nico" (proyecto nico-game).
+// Pegar en: Consola de Firebase → Firestore Database → Reglas → Publicar.
+//
+// - Cualquiera puede LEER los puntajes (ranking y podio).
+// - Cualquiera puede CREAR un puntaje, pero solo con el formato correcto.
+// - Nadie puede MODIFICAR ni BORRAR puntajes desde la página.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rankings/{rankingId} {
+      allow read: if true;
+
+      allow create: if
+        request.resource.data.keys().hasAll(['nombre', 'puntaje', 'fecha', 'goles', 'tiros', 'tarjeta'])
+        && request.resource.data.keys().hasOnly(['nombre', 'puntaje', 'fecha', 'goles', 'tiros', 'tarjeta'])
+        // nombre: texto de 1 a 20 caracteres, sin espacios al inicio ni al final
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() >= 1
+        && request.resource.data.nombre.size() <= 20
+        && request.resource.data.nombre.matches('^[^\\s](.*[^\\s])?$')
+        // puntaje: número entero
+        && request.resource.data.puntaje is int
+        && request.resource.data.puntaje >= 0
+        && request.resource.data.puntaje <= 1000
+        // fecha: la pone el servidor
+        && request.resource.data.fecha == request.time
+        // datos del partido
+        && request.resource.data.goles is int
+        && request.resource.data.goles >= 0
+        && request.resource.data.goles <= 200
+        && request.resource.data.tiros is int
+        && request.resource.data.tiros >= request.resource.data.goles
+        && request.resource.data.tiros <= 400
+        && (request.resource.data.tarjeta == null || request.resource.data.tarjeta == 'roja');
+
+      allow update, delete: if false;
+    }
+  }
+}

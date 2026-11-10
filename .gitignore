@@ -1,0 +1,8 @@
+# Demo de la premiación: solo para probar en local, no se publica
+demo-podio.html
+
+# Archivos del sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
