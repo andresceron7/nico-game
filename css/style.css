@@ -175,7 +175,7 @@ body::after {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
   z-index: 44;
   pointer-events: none;
 }
@@ -195,7 +195,7 @@ body::after {
 .credit .rank-open:hover { color: var(--yellow); }
 .credit .rank-open:focus-visible { outline: 3px dashed var(--yellow); outline-offset: 6px; }
 /* En el inicio hay más espacio abajo para el botón VER RANKING */
-#screen-intro { padding-bottom: max(84px, env(safe-area-inset-bottom)); }
+#screen-intro { padding-bottom: max(94px, env(safe-area-inset-bottom)); }
 
 /* Popup del ranking */
 .rank-pop {
@@ -362,6 +362,14 @@ canvas {
   display: flex;
   flex-direction: column;
   gap: 22px;
+}
+/* En vertical el escenario mide justo lo que ocupa el canvas (proporción 160x128),
+   así Nico, las reglas y el diálogo suben en vez de quedar con huecos */
+@media (orientation: portrait) {
+  .intro-body .stage {
+    flex: 0 1 auto;
+    height: calc((min(100vw, 892px) - 32px - 28px) * 0.8 + 28px);
+  }
 }
 .intro-side {
   display: flex;
@@ -792,7 +800,7 @@ canvas {
 @media (orientation: landscape) and (max-height: 560px) {
   .screen { padding-top: max(14px, env(safe-area-inset-top)); padding-bottom: max(30px, env(safe-area-inset-bottom)); }
   .credit { bottom: max(4px, env(safe-area-inset-bottom)); }
-  .credit { flex-direction: row; justify-content: center; gap: 16px; }
+  .credit { flex-direction: row; justify-content: center; gap: 32px; }
   .credit .credit-link { font-size: 10px; }
   #screen-intro { padding-bottom: max(40px, env(safe-area-inset-bottom)); }
   .wrap { gap: 10px; }
