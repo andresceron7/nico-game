@@ -1,6 +1,10 @@
 # Penales con Nico ⚽
 
-Juego web en **pixel art** para el cumpleaños número 9 de Nico. El jugador tiene **90 segundos** para meterle la mayor cantidad de goles a Nico, el arquero del número 9, y su puntaje entra a un **ranking global** compartido por todos los invitados.
+Juego web en **pixel art** para el cumpleaños número 9 de Nico.
+
+🎮 **Jugar:** https://andresceron7.github.io/nico-game/
+
+El jugador tiene **90 segundos** para meterle la mayor cantidad de goles a Nico, el arquero del número 9, y su puntaje entra a un **ranking global** compartido por todos los invitados.
 
 El **21 de noviembre de 2026 a las 4:00 pm (hora Colombia)** el juego se cierra durante 5 horas y la página muestra la **premiación**: un podio animado con los 3 mejores y la lista de todos los puntajes.
 
@@ -164,7 +168,7 @@ python3 -m http.server 8000
 1. En el repositorio: **Settings → Pages**.
 2. En **Build and deployment → Source** elige **Deploy from a branch**.
 3. **Branch:** `main` y carpeta **`/ (root)`** → **Save**.
-4. En 1–2 minutos la página queda en `https://<usuario>.github.io/nico-game/`.
+4. En 1–2 minutos la página queda en **https://andresceron7.github.io/nico-game/**.
 
 Cada `git push` a `main` actualiza la página automáticamente.
 
