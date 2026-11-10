@@ -34,6 +34,8 @@
   // Puntos según la distancia entre el gol y Nico (cuando llega el balón)
   const pointsFor = (dist) => dist === 1 ? 3 : dist === 2 ? 2 : 1;
   const HATTRICK_BONUS = 3, YELLOW_PENALTY = 2, RED_PENALTY = 3;
+  // Con dos Nicos en la cancha, los goles y el bono de hat-trick valen el doble (los castigos no)
+  const TWO_KEEPERS_MULT = 2;
 
   // Tiempos de la escena del árbitro (ms)
   const REF_IN = 550, REF_OUT_AT = 2900, REF_OUT = 500;
@@ -600,7 +602,8 @@
       G.result = 'goal';
       // Puntos por cercanía al Nico más cercano
       const dist = Math.min(...ks.map((q) => Math.abs(G.ball.target - q.sector)));
-      const pts = pointsFor(dist);
+      const mult = G.keeper2 ? TWO_KEEPERS_MULT : 1;   // x2 solo si el segundo Nico ya está en la cancha
+      const pts = pointsFor(dist) * mult;
       G.lastPts = pts;
       G.goals++;
       G.saveStreak = 0;
@@ -610,12 +613,13 @@
       G.cheerUntil = now + 1500;
       G.shakeUntil = now + 300;
       Sfx.goal();
-      const label = dist === 1 ? ' · ¡PEGADITO A NICO!' : '';
+      const label = (mult > 1 ? ' · x' + mult : '') + (dist === 1 ? ' · ¡PEGADITO A NICO!' : '');
       flash('¡GOOOL!', '+' + pts + (pts === 1 ? ' PUNTO' : ' PUNTOS') + label, 'goal', RESULT_MS);
       bump(hud.goals);
       if (G.goalStreak >= 3) {
         G.goalStreak = 0;
         G.pending = 'hattrick';
+        G.hattrickMult = mult;
       }
     }
     updateHud();
@@ -628,7 +632,7 @@
     if (p === 'red') return startCard('red');
     if (G.timeUp) {
       // Se acabó el tiempo: los puntos cuentan igual, pero sin animación
-      if (p === 'hattrick') addPoints(HATTRICK_BONUS);
+      if (p === 'hattrick') addPoints(HATTRICK_BONUS * (G.hattrickMult || 1));
       if (p === 'yellow') { G.yellowShown = true; addPoints(-YELLOW_PENALTY); }
       return endMatch();
     }
@@ -647,10 +651,11 @@
     G.phase = 'hattrick';
     G.phaseAt = now;
     resetBall();
-    addPoints(HATTRICK_BONUS);
+    const bonus = HATTRICK_BONUS * (G.hattrickMult || 1);
+    addPoints(bonus);
     Sfx.goal();
     overlay.replaceChildren();
-    say('¡QUÉ CRACK!\n¡HAT-TRICK!', '+' + HATTRICK_BONUS + ' PUNTOS EXTRA', 'plus', 'nico');
+    say('¡QUÉ CRACK!\n¡HAT-TRICK!', '+' + bonus + ' PUNTOS EXTRA' + (bonus > HATTRICK_BONUS ? ' · x2' : ''), 'plus', 'nico');
     continueBtn.hidden = false;
     G.canContinue = true;
     updateHud();

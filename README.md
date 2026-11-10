@@ -77,6 +77,7 @@ La página es **responsive** (móvil vertical y horizontal, tablet y desktop) y 
 | **Tarjeta roja** (segunda tarjeta) | **−3** y fin del juego |
 
 - La distancia se mide con la posición de Nico **cuando llega el balón** (con dos Nicos, contra el más cercano).
+- **x2 con dos Nicos:** mientras el segundo Nico está en la cancha, los goles (6 / 4 / 2) y el bono de hat-trick (+6) valen el doble; el mensaje de gol lo indica ("+6 PUNTOS · x2"). Los castigos de tarjetas no se duplican.
 - El puntaje nunca baja de 0.
 
 ### Eventos
@@ -187,6 +188,7 @@ Los valores principales están al inicio de [`js/game.js`](js/game.js):
 | `BASE_STEP` / `SPEEDUP` / `MIN_STEP` | `850` / `0.87` / `170` | Velocidad de Nico según los goles |
 | `FRENZY_MS` / `FRENZY_STEP` | `15000` / `100` | Últimos segundos súper rápidos |
 | `TWO_KEEPERS_MIN_POINTS` | `70` | Puntos a las 0:15 para que aparezca el segundo Nico |
+| `TWO_KEEPERS_MULT` | `2` | Multiplicador de puntos con dos Nicos en la cancha |
 | `HATTRICK_BONUS` / `YELLOW_PENALTY` / `RED_PENALTY` | `3` / `2` / `3` | Bonos y castigos |
 | `AWARDS_START` | 21 nov 2026, 21:00 UTC | Inicio de la premiación (dura 5 h) |
 

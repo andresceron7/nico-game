@@ -101,6 +101,14 @@ Registro de cómo se construyó **Penales con Nico**, paso a paso, en el orden e
 - Si el jugador termina la partida **sin ninguna tarjeta** (ni amarilla ni roja), aparece una **medalla de plata** pixel junto a su nombre en todas las listas (ranking final, "Ver ranking", premiación) y en el **podio**. Los expulsados siguen con la tarjetita roja.
 - En Firebase, el campo `tarjeta` ahora acepta `null` (sin tarjetas), `'amarilla'` o `'roja'`. Por eso se actualizaron las reglas (`firestore.rules`), y se publicaron **antes** que el código.
 
+## 13. Puntos x2 con dos arqueros
+
+- Mientras el segundo Nico está en la cancha, **los goles valen el doble** (6, 4 o 2 puntos) y el **bono de hat-trick también** (+6). Mayor dificultad, mayor recompensa.
+- Los **castigos no se duplican**: la amarilla sigue en −2 y la roja en −3.
+- **Aviso:** el segundo Nico entra sin aviso, pero el mensaje de gol dice "+6 PUNTOS · x2" para que se entienda el premio.
+- Solo cuenta cuando el segundo Nico ya está en la cancha: el tiro que estaba en el aire a las 0:15 vale normal.
+- No afecta a Firebase: el puntaje sigue siendo un entero en el mismo campo.
+
 ---
 
 ### Cómo se verificó
