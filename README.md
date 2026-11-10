@@ -62,6 +62,7 @@ La página es **responsive** (móvil vertical y horizontal, tablet y desktop) y 
 - **Cada gol lo hace más rápido:** tiempo entre pasos = `850 ms × 0,87^goles` (mínimo 170 ms). No se le avisa al jugador.
 - **Sorpresas:** desde el 3er gol, en cada paso puede cambiar de dirección (7 % por gol, máximo 30 %).
 - **Últimos 15 segundos:** un paso cada **100 ms** (10 zonas por segundo), sin aviso.
+- **Segundo Nico:** si a las **0:15** el jugador tiene **70 puntos o más**, aparece un segundo Nico idéntico, sin aviso (se revisa solo en ese instante; si llega a 70 después, no aparece). Los dos se mueven a la vez y **nunca comparten zona ni se atraviesan**: si van a chocar, rebotan entre sí (y si no hay espacio, se quedan quietos ese paso). Si cualquiera de los dos está en la zona del balón, es atajada.
 - El balón tarda siempre **650 ms** en llegar. **Nico ataja si está en la zona apuntada en el momento en que llega el balón.**
 
 ### Puntos
@@ -75,7 +76,7 @@ La página es **responsive** (móvil vertical y horizontal, tablet y desktop) y 
 | **Tarjeta amarilla** (2 atajadas seguidas) | **−2** |
 | **Tarjeta roja** (segunda tarjeta) | **−3** y fin del juego |
 
-- La distancia se mide con la posición de Nico **cuando llega el balón**.
+- La distancia se mide con la posición de Nico **cuando llega el balón** (con dos Nicos, contra el más cercano).
 - El puntaje nunca baja de 0.
 
 ### Eventos
@@ -184,6 +185,7 @@ Los valores principales están al inicio de [`js/game.js`](js/game.js):
 | `FLIGHT_MS` | `650` | Lo que tarda el balón en llegar |
 | `BASE_STEP` / `SPEEDUP` / `MIN_STEP` | `850` / `0.87` / `170` | Velocidad de Nico según los goles |
 | `FRENZY_MS` / `FRENZY_STEP` | `15000` / `100` | Últimos segundos súper rápidos |
+| `TWO_KEEPERS_MIN_POINTS` | `70` | Puntos a las 0:15 para que aparezca el segundo Nico |
 | `HATTRICK_BONUS` / `YELLOW_PENALTY` / `RED_PENALTY` | `3` / `2` / `3` | Bonos y castigos |
 | `AWARDS_START` | 21 nov 2026, 21:00 UTC | Inicio de la premiación (dura 5 h) |
 

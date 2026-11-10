@@ -26,6 +26,8 @@
   const stepMs = (goals) => Math.max(MIN_STEP, Math.round(BASE_STEP * Math.pow(SPEEDUP, goals)));
   // Últimos 15 segundos: Nico a toda velocidad (un paso cada 0,1 s = 10 sectores por segundo)
   const FRENZY_MS = 15000, FRENZY_STEP = 100;
+  // Segundo Nico: solo si a las 0:15 el jugador tiene al menos estos puntos
+  const TWO_KEEPERS_MIN_POINTS = 70;
   // Sorpresas: desde el 3er gol (nivel 4) a veces cambia de dirección
   const reverseChance = (goals) => goals < 3 ? 0 : Math.min(0.3, 0.07 * (goals - 2));
 
@@ -413,13 +415,14 @@
       goals: 0, shots: 0, saves: 0, aim: 2,
       points: 0, goalStreak: 0, saveStreak: 0, cards: 0, pending: null,
       lastPts: 0, redCard: false, yellowShown: false, cardShown: false, slideFrom: 0, slideTo: 0, canContinue: false,
-      left: GAME_MS, lastSec: GAME_MS / 1000, frenzy: false, timeUp: false, endShown: false,
+      left: GAME_MS, lastSec: GAME_MS / 1000, frenzy: false, twoKeepers: false, timeUp: false, endShown: false,
       cheerUntil: 0, shakeUntil: 0, result: null, ball: null,
       keeper: {
         sector: 2, prev: 2, dir: Math.random() < 0.5 ? -1 : 1,
         int: BASE_STEP, moveStart: -1e9, nextStep: 0, frozen: true,
         pose: 'idle', mouth: 'smile',
       },
+      keeper2: null,   // segundo Nico: aparece en los últimos 15 s
     });
     overlay.replaceChildren();
     hideSay();
@@ -474,16 +477,53 @@
   }
 
   // --- Arquero ---
-  function stepKeeper(at) {
-    const k = G.keeper;
-    if (Math.random() < reverseChance(G.goals)) k.dir *= -1;   // ¡sorpresa!
-    let n = k.sector + k.dir;
-    if (n < 0 || n >= SECTORS) { k.dir *= -1; n = k.sector + k.dir; }  // rebota en los palos
+  // Próximo sector de un arquero (con cambio de dirección sorpresa y rebote en los palos)
+  function nextMove(k, surprise) {
+    let d = k.dir;
+    if (surprise && Math.random() < reverseChance(G.goals)) d *= -1;   // ¡sorpresa!
+    let n = k.sector + d;
+    if (n < 0 || n >= SECTORS) { d *= -1; n = k.sector + d; }         // rebota en los palos
+    return { n, d };
+  }
+  function applyMove(k, m, at) {
+    k.dir = m.d;
     k.prev = k.sector;
-    k.sector = n;
+    k.sector = m.n;
     k.moveStart = at;
     k.int = keeperStep();
   }
+  function stepKeeper(at) {
+    const k = G.keeper, k2 = G.keeper2;
+    let a = nextMove(k, true);
+    if (!k2) { applyMove(k, a, at); return; }
+    // Dos arqueros: dan el paso al mismo tiempo y NUNCA comparten sector ni se atraviesan
+    let b = nextMove(k2, true);
+    const clash = (a, b) => a.n === b.n || (a.n === k2.sector && b.n === k.sector);
+    if (clash(a, b)) {
+      // rebotan entre sí: ambos cambian de dirección
+      a = nextMove({ sector: k.sector, dir: -k.dir }, false);
+      b = nextMove({ sector: k2.sector, dir: -k2.dir }, false);
+      if (clash(a, b)) {
+        // sin espacio: se quedan quietos este paso (ya estaban en sectores distintos)
+        a = { n: k.sector, d: -k.dir };
+        b = { n: k2.sector, d: -k2.dir };
+      }
+    }
+    applyMove(k, a, at);
+    applyMove(k2, b, at);
+  }
+
+  // Aparece el segundo Nico, en el extremo opuesto al primero
+  function spawnKeeper2() {
+    const k = G.keeper;
+    const sector = k.sector <= 2 ? SECTORS - 1 : 0;
+    G.keeper2 = {
+      sector, prev: sector, dir: sector === 0 ? 1 : -1,
+      int: keeperStep(), moveStart: -1e9, spawnAt: now,
+      pose: 'idle', mouth: 'smile',
+    };
+  }
+  const keepers = () => (G.keeper2 ? [G.keeper, G.keeper2] : [G.keeper]);
   // Tiempo entre pasos de Nico: según los goles, y muy rápido en los últimos 15 s
   function keeperStep() {
     const base = stepMs(G.goals);
@@ -497,8 +537,7 @@
       k.nextStep += keeperStep();
     }
   }
-  function keeperVisual() {
-    const k = G.keeper;
+  function keeperVisual(k = G.keeper) {
     const dur = Math.min(140, k.int * 0.55);
     const t = clamp((now - k.moveStart) / dur, 0, 1);
     const e = t * (2 - t);
@@ -532,7 +571,9 @@
   // Se evalúa cuando el balón llega: ¿dónde está Nico en ese instante?
   function resolveShot() {
     const k = G.keeper;
-    const saved = k.sector === G.ball.target;
+    const ks = keepers();
+    const saver = ks.find((q) => q.sector === G.ball.target);  // ¿alguno está en el sector?
+    const saved = !!saver;
     k.frozen = true;
     G.phase = 'result';
     G.phaseAt = G.ball.arrive;
@@ -542,9 +583,8 @@
       G.saves++;
       G.goalStreak = 0;
       G.saveStreak++;
-      k.prev = k.sector;
-      k.moveStart = -1e9;
-      k.pose = 'hold'; k.mouth = 'smile';
+      ks.forEach((q) => { q.prev = q.sector; q.moveStart = -1e9; q.pose = 'idle'; q.mouth = 'smile'; });
+      saver.pose = 'hold';
       Sfx.save();
       let sub;
       if (G.saveStreak >= 2) {
@@ -558,14 +598,15 @@
       flash('¡ATAJÓ NICO!', sub, 'save', RESULT_MS);
     } else {
       G.result = 'goal';
-      const dist = Math.abs(G.ball.target - k.sector);
+      // Puntos por cercanía al Nico más cercano
+      const dist = Math.min(...ks.map((q) => Math.abs(G.ball.target - q.sector)));
       const pts = pointsFor(dist);
       G.lastPts = pts;
       G.goals++;
       G.saveStreak = 0;
       G.goalStreak++;
       addPoints(pts);
-      k.pose = 'idle'; k.mouth = 'frown';
+      ks.forEach((q) => { q.pose = 'idle'; q.mouth = 'frown'; });
       G.cheerUntil = now + 1500;
       G.shakeUntil = now + 300;
       Sfx.goal();
@@ -623,14 +664,17 @@
     G.canContinue = false;
     resetBall();
     const k = G.keeper;
-    k.pose = 'idle'; k.mouth = 'smile';
-    k.prev = k.sector; k.moveStart = -1e9;
+    keepers().forEach((q) => { q.pose = 'idle'; q.mouth = 'smile'; q.prev = q.sector; q.moveStart = -1e9; });
     overlay.replaceChildren();
     if (color === 'red') {
       G.redCard = true;
       // La barrida termina al centro del arco, donde no la tapa el árbitro
       const x0 = sectorX(k.sector);
-      const to = 128;
+      let to = 128;
+      if (G.keeper2) {
+        const x2 = sectorX(G.keeper2.sector);
+        if (Math.abs(x2 - to) < 34) to = x2 < to ? 185 : 92;
+      }
       G.slideTo = to;
       G.slideFrom = Math.abs(x0 - to) < 40 ? to + (x0 < to ? -60 : 60) : x0;
     }
@@ -673,7 +717,7 @@
     G.phase = 'aim';
     G.phaseAt = now;
     resetBall();
-    k.pose = 'idle'; k.mouth = 'smile';
+    keepers().forEach((q) => { q.pose = 'idle'; q.mouth = 'smile'; });
     k.frozen = false;
     k.nextStep = now + keeperStep();
     updateHud();
@@ -753,11 +797,14 @@
     // Últimos 15 segundos: Nico se acelera al máximo, sin avisar (es sorpresa)
     if (!G.frenzy && G.left <= FRENZY_MS && G.left > 0) {
       G.frenzy = true;
+      // Se revisa UNA sola vez, justo a las 0:15: ¿merece el segundo Nico?
+      G.twoKeepers = G.points >= TWO_KEEPERS_MIN_POINTS;
       G.keeper.nextStep = Math.min(G.keeper.nextStep, now + FRENZY_STEP);
     }
 
     if (G.phase === 'aim') {
       if (G.timeUp) { endMatch(); return; }
+      if (G.frenzy && G.twoKeepers && !G.keeper2) spawnKeeper2();   // ¡aparece el segundo Nico! (sin aviso)
       updateKeeper(now);
     } else if (G.phase === 'flight') {
       if (now >= G.ball.arrive) {
@@ -810,6 +857,17 @@
     // Nico
     const k = G.keeper;
     const blink = (now % 2900) < 120;
+    if (G.keeper2) {
+      const k2 = G.keeper2;
+      const kv2 = keeperVisual(k2);
+      const drop = Math.round(Math.max(0, 1 - (now - k2.spawnAt) / 260) * 40); // entra cayendo
+      const red = G.phase === 'red' && now - G.phaseAt >= REF_IN;
+      const hop2 = red ? Math.round(Math.abs(Math.sin(now / 170)) * 4) : kv2.hop;
+      const spr2 = red ? S.nico('up', 'grin', 'happy')
+        : S.nico(k2.pose, k2.mouth, (now % 3300) < 120 ? 'closed' : (G.result === 'goal' ? 'down' : 'open'));
+      drawShadow(g, kv2.x, GOAL.line - 1, 26);
+      g.drawImage(spr2, Math.round(kv2.x) - 17, GOAL.line - 49 - hop2 - drop);
+    }
     if (G.phase === 'red' && now - G.phaseAt >= REF_IN) {
       // ¡Nico celebra la roja con una barrida de rodillas!
       const t = clamp((now - G.phaseAt - REF_IN) / SLIDE_MS, 0, 1);

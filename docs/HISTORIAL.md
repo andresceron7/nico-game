@@ -90,6 +90,12 @@ Registro de cómo se construyó **Penales con Nico**, paso a paso, en el orden e
 
 - Documentación (`README.md` y este historial), `.gitignore` y repositorio público **nico-game** en GitHub, publicado con **GitHub Pages**.
 
+## 11. Dos arqueros en los últimos 15 segundos
+
+- Al entrar en los últimos 15 segundos aparece **un segundo Nico idéntico**, sin aviso, **solo si el jugador tiene 70 puntos o más a las 0:15**. Esa condición se revisa una sola vez, en ese instante; con menos puntos solo aumenta la velocidad. Entra en el siguiente momento de apuntar, nunca con el balón en el aire, por el extremo opuesto del arco.
+- Los dos se mueven a 10 sectores por segundo, dando el paso al mismo tiempo. **Nunca comparten sector ni se atraviesan**: si van a chocar, rebotan entre sí, y si no hay espacio se quedan quietos ese paso. Se verificó con una simulación de 1 millón de pasos, con 0 choques.
+- Es atajada si cualquiera de los dos está en el sector del balón. Los puntos por cercanía se miden contra el Nico más cercano.
+
 ---
 
 ### Cómo se verificó
