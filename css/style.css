@@ -622,6 +622,38 @@ canvas {
 .ranking .empty.error { color: #ff8a93; }
 .ranking .retry { font-size: 10px; padding: 10px 14px; }
 .ranking li .dt { color: #777; white-space: nowrap; font-size: .75em; }
+/* Medalla de plata pixel: partida sin tarjetas */
+.md {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  align-self: center;
+  width: 0.9em;
+  height: 1.15em;
+}
+.md::before {               /* cinta */
+  content: "";
+  position: absolute;
+  left: 0.2em;
+  top: 0;
+  width: 0.5em;
+  height: 0.45em;
+  background: linear-gradient(90deg, #2f6fd1 50%, #e63946 50%);
+}
+.md::after {                /* medalla */
+  content: "";
+  position: absolute;
+  left: 0.05em;
+  bottom: 0;
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+  background: #dfe3ea;
+  box-shadow: inset -2px -2px 0 #9aa0aa, 0 0 0 2px #000;
+}
+.pod-label .nmrow { display: flex; align-items: center; justify-content: center; gap: 1cqw; max-width: 100%; min-width: 0; }
+.pod-label .nmrow .md { font-size: 2.6cqw; }
+
 /* Pantalla final: todos los puntajes, con scroll propio */
 #screen-end .ranking ol { max-height: min(42vh, 360px); overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
 @media (max-width: 420px) {

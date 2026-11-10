@@ -116,9 +116,10 @@ Los puntajes se guardan en **Cloud Firestore** (proyecto `nico-game`), sin auten
 | `fecha` | timestamp | `serverTimestamp()` |
 | `goles` | entero | para desempatar y mostrar |
 | `tiros` | entero | para desempatar |
-| `tarjeta` | `'roja'` o `null` | tarjetita roja en las listas |
+| `tarjeta` | `null`, `'amarilla'` o `'roja'` | `null` = terminó sin tarjetas → 🥈 medalla de plata; `'roja'` → tarjetita roja |
 
 - **Orden:** más puntos → más goles → menos tiros → el más antiguo.
+- **Medalla de plata** 🥈 junto al nombre (en las listas y en el podio) si la partida terminó **sin ninguna tarjeta**; la **tarjetita roja** si terminó expulsado.
 - **Fechas** en formato colombiano `dd/mm/aaaa`.
 - **Estados en pantalla:** "Cargando ranking…", "No se pudo cargar el ranking, intenta de nuevo" (con botón REINTENTAR) y "Aún no hay puntajes, ¡sé el primero!".
 - **Sin internet:** la partida queda en cola en el navegador y se sube sola cuando vuelve la conexión.

@@ -7,7 +7,7 @@
      fecha    serverTimestamp()
      goles    número entero   (para desempatar y mostrar)
      tiros    número entero   (para desempatar)
-     tarjeta  'roja' o null   (para la tarjetita roja de las listas)
+     tarjeta  null (sin tarjetas → medalla de plata), 'amarilla' o 'roja'
 
    - Si una partida no se puede subir (sin señal), queda en cola en
      el celular y se sube sola cuando vuelva la conexión.
@@ -71,7 +71,7 @@ const Ranking = (() => {
       puntaje: e.points,
       goles: e.goals,
       tiros: e.shots,
-      tarjeta: e.card === 'red' ? 'roja' : null,
+      tarjeta: e.card === 'red' ? 'roja' : e.card === 'yellow' ? 'amarilla' : null,
       fecha: firebase.firestore.FieldValue.serverTimestamp(),
     }));
     return ref.id;
@@ -102,7 +102,7 @@ const Ranking = (() => {
         points: x.puntaje || 0,
         goals: x.goles || 0,
         shots: x.tiros || 0,
-        card: x.tarjeta === 'roja' ? 'red' : null,
+        card: x.tarjeta === 'roja' ? 'red' : x.tarjeta === 'amarilla' ? 'yellow' : null,
         date: x.fecha && x.fecha.toMillis ? x.fecha.toMillis() : Date.now(),
       };
     });
@@ -120,7 +120,7 @@ const Ranking = (() => {
     const entry = {
       id: newId(), name: cleanName(name) || 'JUGADOR',
       points: Math.max(0, Math.round(points)), goals, shots,
-      card: card === 'red' ? 'red' : null, date: Date.now(),
+      card: card === 'red' || card === 'yellow' ? card : null, date: Date.now(),
     };
     // Respaldo local siempre
     const local = read(LOCAL_KEY);

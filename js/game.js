@@ -1004,7 +1004,9 @@
 
     // Guardado automático con el nombre del inicio, y luego se actualiza el ranking
     let myId = null;
-    try { myId = await Ranking.submit({ name, points, goals, shots, card: red ? 'red' : null }); } catch (e) { /* queda en cola */ }
+    // tarjeta: 'red' (expulsado), 'yellow' (tuvo amarilla) o null (sin tarjetas → medalla de plata)
+    const card = red ? 'red' : (G.cards > 0 ? 'yellow' : null);
+    try { myId = await Ranking.submit({ name, points, goals, shots, card }); } catch (e) { /* queda en cola */ }
     endRankingId = myId;
     loadEndRanking(true);
   }
@@ -1056,6 +1058,15 @@
     ol.appendChild(li);
   }
 
+  // Medalla de plata: terminó el partido sin ninguna tarjeta
+  function medal() {
+    const m = document.createElement('span');
+    m.className = 'md';
+    m.title = 'Sin tarjetas';
+    m.setAttribute('aria-label', 'Medalla: sin tarjetas');
+    return m;
+  }
+
   function renderRankList(ol, list, isMine) {
     if (!list.length) { rankStatus(ol, 'empty'); return; }
     ol.replaceChildren();
@@ -1066,6 +1077,7 @@
       if (isMine(r, i)) li.className = 'me';
       li.append(mk('pos', (i + 1) + '.'), mk('nm', r.name));
       if (r.card === 'red') { const c = mk('rc', ''); c.title = 'Tarjeta roja'; li.append(c); }
+      else if (!r.card) li.append(medal());
       li.append(
         mk('dots', ''),
         mk('pts', (r.points || 0) + ' PTS'),
@@ -1423,7 +1435,11 @@
       el.style.width = (b.w / GW * 100) + '%';
       el.style.top = ((b.top + 6) / AH * 100) + '%';
       const mk = (cls, txt) => { const s = document.createElement('span'); s.className = cls; s.textContent = txt; return s; };
-      el.append(mk('pl', (i + 1) + 'º'), mk('nm', e ? e.name : '—'), mk('pt', e ? e.points + ' PTS' : ''));
+      const row = document.createElement('span');
+      row.className = 'nmrow';
+      row.append(mk('nm', e ? e.name : '—'));
+      if (e && !e.card) row.append(medal());        // medalla también en el podio
+      el.append(mk('pl', (i + 1) + 'º'), row, mk('pt', e ? e.points + ' PTS' : ''));
       podLabels.appendChild(el);
     });
   }

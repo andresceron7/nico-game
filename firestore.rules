@@ -32,7 +32,8 @@ service cloud.firestore {
         && request.resource.data.tiros is int
         && request.resource.data.tiros >= request.resource.data.goles
         && request.resource.data.tiros <= 400
-        && (request.resource.data.tarjeta == null || request.resource.data.tarjeta == 'roja');
+        // tarjeta: null = sin tarjetas (medalla de plata), 'amarilla' o 'roja'
+        && (request.resource.data.tarjeta == null || request.resource.data.tarjeta == 'amarilla' || request.resource.data.tarjeta == 'roja');
 
       allow update, delete: if false;
     }

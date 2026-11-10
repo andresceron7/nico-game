@@ -96,6 +96,11 @@ Registro de cómo se construyó **Penales con Nico**, paso a paso, en el orden e
 - Los dos se mueven a 10 sectores por segundo, dando el paso al mismo tiempo. **Nunca comparten sector ni se atraviesan**: si van a chocar, rebotan entre sí, y si no hay espacio se quedan quietos ese paso. Se verificó con una simulación de 1 millón de pasos, con 0 choques.
 - Es atajada si cualquiera de los dos está en el sector del balón. Los puntos por cercanía se miden contra el Nico más cercano.
 
+## 12. Medalla de plata por juego limpio
+
+- Si el jugador termina la partida **sin ninguna tarjeta** (ni amarilla ni roja), aparece una **medalla de plata** pixel junto a su nombre en todas las listas (ranking final, "Ver ranking", premiación) y en el **podio**. Los expulsados siguen con la tarjetita roja.
+- En Firebase, el campo `tarjeta` ahora acepta `null` (sin tarjetas), `'amarilla'` o `'roja'`. Por eso se actualizaron las reglas (`firestore.rules`), y se publicaron **antes** que el código.
+
 ---
 
 ### Cómo se verificó
