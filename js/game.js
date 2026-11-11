@@ -24,10 +24,13 @@
   // Dificultad: cada gol reduce el tiempo entre pasos del arquero
   const BASE_STEP = 850, MIN_STEP = 170, SPEEDUP = 0.87;
   const stepMs = (goals) => Math.max(MIN_STEP, Math.round(BASE_STEP * Math.pow(SPEEDUP, goals)));
-  // Últimos 15 segundos: Nico a toda velocidad (un paso cada 0,1 s = 10 sectores por segundo)
-  const FRENZY_MS = 15000, FRENZY_STEP = 100;
-  // Segundo Nico: solo si a las 0:15 el jugador tiene al menos estos puntos
+  // Últimos 20 segundos: Nico a toda velocidad (un paso cada 0,1 s = 10 sectores por segundo)
+  const FRENZY_MS = 20000, FRENZY_STEP = 100;
+  // Segundo Nico: solo si a las 0:20 el jugador tiene al menos estos puntos
   const TWO_KEEPERS_MIN_POINTS = 70;
+  // Con dos Nicos cada uno se mueve a su manera: su propio ritmo (±30 % alrededor del normal)
+  // y sus propios cambios de dirección (al menos 20 % por paso), así nunca se mueven en espejo
+  const TWO_KEEPERS_JITTER = 0.3, TWO_KEEPERS_MIN_REVERSE = 0.2;
   // Sorpresas: desde el 3er gol (nivel 4) a veces cambia de dirección
   const reverseChance = (goals) => goals < 3 ? 0 : Math.min(0.3, 0.07 * (goals - 2));
 
@@ -286,9 +289,14 @@
     document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === 'screen-' + name));
     state.screen = name;
     stages.forEach(fit);
-    // "VER RANKING" solo existe en el inicio (nunca mientras se juega)
-    document.getElementById('btn-ranking').hidden = name !== 'intro';
-    if (name !== 'intro') document.getElementById('rank-modal').hidden = true;
+    // "VER RANKING" (y su nota musical) solo existe en el inicio (nunca mientras se juega)
+    document.getElementById('credit-row').hidden = name !== 'intro';
+    document.getElementById('rank-modal').hidden = true;
+    // Música de fondo: cada pantalla arranca su canción desde el inicio
+    if (name === 'intro') Music.play('game', 'intro', true);
+    else if (name === 'game') Music.play('match', 'match', true);     // moderada: priman los efectos
+    else if (name === 'end') Music.play('podium', 'podium', true);
+    else Music.stop();                                                   // premiación: suena al tocar VER GANADORES
   }
 
   // Texto que aparece letra por letra
@@ -424,7 +432,7 @@
         int: BASE_STEP, moveStart: -1e9, nextStep: 0, frozen: true,
         pose: 'idle', mouth: 'smile',
       },
-      keeper2: null,   // segundo Nico: aparece en los últimos 15 s
+      keeper2: null,   // segundo Nico: aparece en los últimos 20 s
     });
     overlay.replaceChildren();
     hideSay();
@@ -480,9 +488,11 @@
 
   // --- Arquero ---
   // Próximo sector de un arquero (con cambio de dirección sorpresa y rebote en los palos)
-  function nextMove(k, surprise) {
+  function nextMove(k) {
     let d = k.dir;
-    if (surprise && Math.random() < reverseChance(G.goals)) d *= -1;   // ¡sorpresa!
+    let chance = reverseChance(G.goals);
+    if (G.keeper2) chance = Math.max(chance, TWO_KEEPERS_MIN_REVERSE);
+    if (Math.random() < chance) d *= -1;                               // ¡sorpresa!
     let n = k.sector + d;
     if (n < 0 || n >= SECTORS) { d *= -1; n = k.sector + d; }         // rebota en los palos
     return { n, d };
@@ -492,27 +502,6 @@
     k.prev = k.sector;
     k.sector = m.n;
     k.moveStart = at;
-    k.int = keeperStep();
-  }
-  function stepKeeper(at) {
-    const k = G.keeper, k2 = G.keeper2;
-    let a = nextMove(k, true);
-    if (!k2) { applyMove(k, a, at); return; }
-    // Dos arqueros: dan el paso al mismo tiempo y NUNCA comparten sector ni se atraviesan
-    let b = nextMove(k2, true);
-    const clash = (a, b) => a.n === b.n || (a.n === k2.sector && b.n === k.sector);
-    if (clash(a, b)) {
-      // rebotan entre sí: ambos cambian de dirección
-      a = nextMove({ sector: k.sector, dir: -k.dir }, false);
-      b = nextMove({ sector: k2.sector, dir: -k2.dir }, false);
-      if (clash(a, b)) {
-        // sin espacio: se quedan quietos este paso (ya estaban en sectores distintos)
-        a = { n: k.sector, d: -k.dir };
-        b = { n: k2.sector, d: -k2.dir };
-      }
-    }
-    applyMove(k, a, at);
-    applyMove(k2, b, at);
   }
 
   // Aparece el segundo Nico, en el extremo opuesto al primero
@@ -521,23 +510,36 @@
     const sector = k.sector <= 2 ? SECTORS - 1 : 0;
     G.keeper2 = {
       sector, prev: sector, dir: sector === 0 ? 1 : -1,
-      int: keeperStep(), moveStart: -1e9, spawnAt: now,
+      int: FRENZY_STEP, moveStart: -1e9, spawnAt: now, leaveAt: 0,
       pose: 'idle', mouth: 'smile',
     };
+    G.keeper2.nextStep = now + nextInterval(G.keeper2);
+  }
+  // Al terminar el partido (por tiempo o por roja) el segundo Nico se va: queda uno solo
+  function dismissKeeper2() {
+    if (G.keeper2 && !G.keeper2.leaveAt) G.keeper2.leaveAt = now;
   }
   const keepers = () => (G.keeper2 ? [G.keeper, G.keeper2] : [G.keeper]);
-  // Tiempo entre pasos de Nico: según los goles, y muy rápido en los últimos 15 s
+  // Tiempo entre pasos de Nico: según los goles, y muy rápido en los últimos 20 s
   function keeperStep() {
     const base = stepMs(G.goals);
     return G.frenzy ? Math.min(base, FRENZY_STEP) : base;
   }
+  // Próximo intervalo de un arquero (con dos Nicos, cada uno con su propio ritmo)
+  function nextInterval(k) {
+    const base = keeperStep();
+    k.int = G.keeper2 ? Math.round(base * (1 - TWO_KEEPERS_JITTER + Math.random() * 2 * TWO_KEEPERS_JITTER)) : base;
+    return k.int;
+  }
+  // Cada arquero da sus pasos por su cuenta (pueden coincidir en el mismo sector)
   function updateKeeper(until) {
-    const k = G.keeper;
-    if (k.frozen) return;
-    while (k.nextStep <= until) {
-      stepKeeper(k.nextStep);
-      k.nextStep += keeperStep();
-    }
+    if (G.keeper.frozen) return;
+    keepers().forEach((k) => {
+      while (k.nextStep <= until) {
+        applyMove(k, nextMove(k), k.nextStep);
+        k.nextStep += nextInterval(k);
+      }
+    });
   }
   function keeperVisual(k = G.keeper) {
     const dur = Math.min(140, k.int * 0.55);
@@ -673,13 +675,10 @@
     overlay.replaceChildren();
     if (color === 'red') {
       G.redCard = true;
+      dismissKeeper2();   // en la roja queda un solo Nico
       // La barrida termina al centro del arco, donde no la tapa el árbitro
       const x0 = sectorX(k.sector);
-      let to = 128;
-      if (G.keeper2) {
-        const x2 = sectorX(G.keeper2.sector);
-        if (Math.abs(x2 - to) < 34) to = x2 < to ? 185 : 92;
-      }
+      const to = 128;
       G.slideTo = to;
       G.slideFrom = Math.abs(x0 - to) < 40 ? to + (x0 < to ? -60 : 60) : x0;
     }
@@ -724,7 +723,7 @@
     resetBall();
     keepers().forEach((q) => { q.pose = 'idle'; q.mouth = 'smile'; });
     k.frozen = false;
-    k.nextStep = now + keeperStep();
+    keepers().forEach((q) => { q.nextStep = now + nextInterval(q); });
     updateHud();
   }
 
@@ -732,6 +731,7 @@
     G.phase = 'over';
     G.phaseAt = now;
     G.keeper.frozen = true;
+    dismissKeeper2();   // al final queda un solo Nico
     Sfx.whistleEnd();
     flash('¡FIN DEL PARTIDO!', G.goals + (G.goals === 1 ? ' GOL' : ' GOLES') + ' · ' + G.points + ' PTS', 'end', OVER_MS);
     updateHud();
@@ -799,10 +799,10 @@
     }
     if (G.left <= 0) G.timeUp = true;
 
-    // Últimos 15 segundos: Nico se acelera al máximo, sin avisar (es sorpresa)
+    // Últimos 20 segundos: Nico se acelera al máximo, sin avisar (es sorpresa)
     if (!G.frenzy && G.left <= FRENZY_MS && G.left > 0) {
       G.frenzy = true;
-      // Se revisa UNA sola vez, justo a las 0:15: ¿merece el segundo Nico?
+      // Se revisa UNA sola vez, justo a las 0:20: ¿merece el segundo Nico?
       G.twoKeepers = G.points >= TWO_KEEPERS_MIN_POINTS;
       G.keeper.nextStep = Math.min(G.keeper.nextStep, now + FRENZY_STEP);
     }
@@ -862,10 +862,13 @@
     // Nico
     const k = G.keeper;
     const blink = (now % 2900) < 120;
+    if (G.keeper2 && G.keeper2.leaveAt && now - G.keeper2.leaveAt >= 260) G.keeper2 = null;  // ya se fue
     if (G.keeper2) {
       const k2 = G.keeper2;
       const kv2 = keeperVisual(k2);
-      const drop = Math.round(Math.max(0, 1 - (now - k2.spawnAt) / 260) * 40); // entra cayendo
+      const drop = k2.leaveAt
+        ? Math.round(Math.min(1, (now - k2.leaveAt) / 260) * 60)                // se va saltando hacia arriba
+        : Math.round(Math.max(0, 1 - (now - k2.spawnAt) / 260) * 40);          // entra cayendo
       const red = G.phase === 'red' && now - G.phaseAt >= REF_IN;
       const hop2 = red ? Math.round(Math.abs(Math.sin(now / 170)) * 4) : kv2.hop;
       const spr2 = red ? S.nico('up', 'grin', 'happy')
@@ -1004,9 +1007,6 @@
     endTyper.start(text);
     $('#screen-end').scrollTop = 0;
 
-    $('#rank-note').textContent = Ranking.isGlobal ? 'RANKING GLOBAL · TODOS LOS PUNTAJES' : 'PUNTAJES DE ESTE DISPOSITIVO';
-    rankStatus($('#rank-list'), 'loading');
-
     // Guardado automático con el nombre del inicio, y luego se actualiza el ranking
     let myId = null;
     // tarjeta: 'red' (expulsado), 'yellow' (tuvo amarilla) o null (sin tarjetas → medalla de plata)
@@ -1016,19 +1016,13 @@
     loadEndRanking(true);
   }
 
+  // El ranking ya no se muestra en esta pantalla (está en el popup "VER RANKING"),
+  // pero se consulta para saber si la partida es récord
   let endRankingId = null;
   async function loadEndRanking(celebrate) {
-    const ol = $('#rank-list');
-    rankStatus(ol, 'loading');
     let list;
-    try {
-      list = await Ranking.all();
-    } catch (e) {
-      rankStatus(ol, 'error', () => loadEndRanking(false));
-      return;
-    }
+    try { list = await Ranking.all(); } catch (e) { return; }
     const pos = list.findIndex((r) => r.id === endRankingId);
-    renderRankList(ol, list, (r, i) => i === pos);
     if (!celebrate || state.screen !== 'end') return;
     const isRecord = pos === 0 && G.points > 0;
     $('#new-record').hidden = !isRecord;
@@ -1040,7 +1034,7 @@
     }
   }
 
-  // ---------- Listas de puntajes (pantalla final y premiación) ----------
+  // ---------- Listas de puntajes (popup "VER RANKING") ----------
   const fmtDate = (ms) => new Intl.DateTimeFormat('es-CO', {
     timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric',
   }).format(new Date(ms));
@@ -1123,6 +1117,17 @@
   }
   muteBtn.addEventListener('click', () => { Sfx.unlock(); Sfx.toggle(); paintMute(); });
   paintMute();
+
+  // Música: independiente de los efectos (se puede tener solo una, las dos o ninguna)
+  const musicBtns = document.querySelectorAll('.music-btn');
+  function paintMusic() {
+    musicBtns.forEach((b) => {
+      b.classList.toggle('off', Music.off);
+      b.setAttribute('aria-label', Music.off ? 'Encender música' : 'Apagar música');
+    });
+  }
+  musicBtns.forEach((b) => b.addEventListener('click', () => { Music.toggle(); paintMusic(); }));
+  paintMusic();
 
   document.addEventListener('pointerdown', Sfx.unlock, { capture: true });
   document.addEventListener('keydown', (e) => {
@@ -1256,11 +1261,13 @@
     photo.siu = false;
     photoSiu.hidden = true;
     photoModal.hidden = false;
+    Music.duck(true);              // la música baja a la mitad mientras se ve la foto
     $('#photo-close').focus();
   }
   function closePhoto() {
     photo.open = false;
     photoModal.hidden = true;
+    Music.duck(false);
     creditBtn.focus();
   }
   creditBtn.addEventListener('click', openPhoto);
@@ -1279,10 +1286,21 @@
       if (!rankModal.hidden) rankStatus(rankPopList, 'error', loadPopRanking);
       return;
     }
-    if (!rankModal.hidden) renderRankList(rankPopList, list, () => false);
+    if (!rankModal.hidden) renderRankList(rankPopList, list, popHighlight());
   }
-  function openRanking() {
-    if (state.screen !== 'intro') return;
+  // Filas resaltadas en amarillo: la partida recién jugada (final) o los 3 del podio (premiación)
+  function popHighlight() {
+    if (state.screen === 'end') return (r) => endRankingId != null && r.id === endRankingId;
+    if (state.screen === 'awards') {
+      const keys = new Set(AW.top.map((e) => e.name + '|' + e.points));
+      return (r) => { const k = r.name + '|' + r.points; return keys.delete(k); };   // solo la primera vez
+    }
+    return () => false;
+  }
+  let rankOpener = null;
+  function openRanking(e) {
+    if (!['intro', 'end', 'awards'].includes(state.screen)) return;
+    rankOpener = (e && e.currentTarget) || rankOpenBtn;
     Sfx.unlock();
     $('#rank-pop-note').textContent = Ranking.isGlobal ? 'RANKING GLOBAL · TODOS LOS PUNTAJES' : 'PUNTAJES DE ESTE DISPOSITIVO';
     rankModal.hidden = false;
@@ -1291,9 +1309,11 @@
   }
   function closeRanking() {
     rankModal.hidden = true;
-    rankOpenBtn.focus();
+    (rankOpener || rankOpenBtn).focus();
   }
   rankOpenBtn.addEventListener('click', openRanking);
+  $('#btn-end-ranking').addEventListener('click', openRanking);
+  $('#btn-awards-ranking').addEventListener('click', openRanking);
   $('#rank-close').addEventListener('click', closeRanking);
   rankModal.addEventListener('click', (e) => { if (e.target === rankModal) closeRanking(); });
   $('#photo-close').addEventListener('click', closePhoto);
@@ -1353,34 +1373,57 @@
     });
   }
 
-  // Plan de la entrega del trofeo (tiempos en ms desde "VER GANADORES")
+  // Entrada al podio: cada uno llega caminando desde fuera de la pantalla (derecha) y salta a su puesto
+  const ENTER_X = 262, WALK = 0.12, HOP_MS = 450;   // WALK en px por ms
+  function entryKeys(i, x, start) {
+    const stopX = i === 2 ? 236 : i === 1 ? 96 : x + 48;   // desde dónde salta a su puesto
+    const walkEnd = start + Math.round((ENTER_X - stopX) / WALK);
+    return [
+      { t: start, x: ENTER_X, y: GND },
+      { t: walkEnd, x: stopX, y: GND },
+      { t: walkEnd + HOP_MS, x, y: BLOCKS[i].top, hop: true },
+    ];
+  }
+
+  // Plan de la premiación (tiempos en ms desde "VER GANADORES"):
+  // suben 3º, 2º y 1º → confeti → entra Nico con el trofeo (o el tío Pipe si Nico ganó)
   function buildPlan(chars) {
     const B1 = BLOCKS[0].top;
     const nicoIdx = chars.findIndex((c) => c.isNico);
-    const defaultX = chars.map((c, i) => BLOCKS[i].x + BLOCKS[i].w / 2);
-    if (nicoIdx === 0) return { mode: 'nicoWins', x: defaultX, keys: null };
-    let keys, winnerX = 108, arrive, back = null;
+    const x = chars.map((c, i) => BLOCKS[i].x + BLOCKS[i].w / 2);
+    if (chars.length) x[0] = nicoIdx === 1 ? 132 : 108;   // espacio para quien entrega el trofeo
+
+    const entry = [];
+    let start = 300;
+    for (let i = chars.length - 1; i >= 0; i--) {
+      entry[i] = entryKeys(i, x[i], start);
+      start = entry[i][2].t + 250;
+    }
+    const arr = entry.map((k) => k[2].t);                 // cuándo llega cada uno a su puesto
+    if (!chars.length) return { x, entry, arr, party: Infinity, keys: null };
+
+    const party = arr[0];                                 // llega el 1º: ¡confeti!
+    const d = party + 700;                                // entra quien entrega el trofeo
+    const who = nicoIdx === 0 ? 'uncle' : 'nico';
+    let keys, back = null, arrive;
     if (nicoIdx === 1) {
       // Nico está 2º: baja por la izquierda y se ubica a la izquierda del ganador
-      winnerX = 132;
       const B2 = BLOCKS[1].top;
-      keys = [{ t: 1500, x: 48, y: B2 }, { t: 1900, x: 72, y: GND, hop: true }, { t: 2200, x: 76, y: GND }, { t: 2650, x: 100, y: B1, hop: true }];
-      arrive = 2650;
+      keys = [{ t: d, x: 48, y: B2 }, { t: d + 400, x: 72, y: GND, hop: true }, { t: d + 700, x: 76, y: GND }, { t: d + 1150, x: 100, y: B1, hop: true }];
+      arrive = d + 1150;
       back = [{ t: arrive + 3200, x: 100, y: B1 }, { t: arrive + 3650, x: 76, y: GND, hop: true }, { t: arrive + 3950, x: 72, y: GND }, { t: arrive + 4350, x: 48, y: B2, hop: true }];
     } else if (nicoIdx === 2) {
       // Nico está 3º: baja por la derecha
       const B3 = BLOCKS[2].top;
-      keys = [{ t: 1500, x: 192, y: B3 }, { t: 1900, x: 174, y: GND, hop: true }, { t: 2200, x: 170, y: GND }, { t: 2650, x: 140, y: B1, hop: true }];
-      arrive = 2650;
+      keys = [{ t: d, x: 192, y: B3 }, { t: d + 400, x: 174, y: GND, hop: true }, { t: d + 700, x: 170, y: GND }, { t: d + 1150, x: 140, y: B1, hop: true }];
+      arrive = d + 1150;
       back = [{ t: arrive + 3200, x: 140, y: B1 }, { t: arrive + 3650, x: 170, y: GND, hop: true }, { t: arrive + 3950, x: 174, y: GND }, { t: arrive + 4350, x: 192, y: B3, hop: true }];
     } else {
-      // Nico no está en el podio: entra caminando desde la derecha con el trofeo
-      keys = [{ t: 1500, x: 262, y: GND }, { t: 3000, x: 176, y: GND }, { t: 3450, x: 140, y: B1, hop: true }];
-      arrive = 3450;
+      // Nico no está en el podio (o ganó, y entonces entra el tío Pipe): entra caminando con el trofeo
+      keys = [{ t: d, x: ENTER_X, y: GND }, { t: d + 1300, x: 176, y: GND }, { t: d + 1750, x: 140, y: B1, hop: true }];
+      arrive = d + 1750;
     }
-    const x = defaultX.slice();
-    if (chars.length) x[0] = winnerX;
-    return { mode: 'deliver', nicoIdx, x, keys: back ? keys.concat(back) : keys, arrive, back: !!back };
+    return { x, entry, arr, party, who, nicoIdx, keys: back ? keys.concat(back) : keys, arrive, back: !!back };
   }
 
   function pathPos(keys, t) {
@@ -1407,16 +1450,20 @@
       // Mientras carga: podio vacío y "Cargando ranking…"
       AW.entries = []; AW.top = []; AW.chars = []; AW.plan = null; AW.revealed = false;
       winnersBtn.hidden = true;
+      $('#btn-awards-ranking').hidden = true;
       renderPodLabels();
-      rankStatus($('#awards-list'), 'loading');
       showScreen('awards');
     }
     try { entries = await Ranking.all(); } catch (e) { failed = true; }
     if (failed) {
       winnersBtn.hidden = true;
-      rankStatus($('#awards-list'), 'error', () => { rankStatus($('#awards-list'), 'loading'); showAwards(); });
+      // Sin datos: el botón de VER GANADORES se vuelve REINTENTAR (vuelve a cargar el podio)
+      AW.failed = true;
+      winnersBtn.textContent = 'REINTENTAR';
+      winnersBtn.hidden = false;
       return;
     }
+    AW.failed = false;
     AW.entries = entries;
     AW.top = uniqueTop(entries);
     AW.chars = buildAwardsChars();
@@ -1425,15 +1472,16 @@
     AW.confetti = [];
     winnersBtn.textContent = 'VER GANADORES';
     winnersBtn.hidden = AW.top.length === 0;
+    $('#btn-awards-ranking').hidden = false;
     renderPodLabels();
-    renderAwardsList();
     showScreen('awards');
   }
 
-  function renderPodLabels() {
+  // Nombres del podio: aparecen a medida que cada uno llega a su puesto
+  function renderPodLabels(shown = []) {
     podLabels.replaceChildren();
     BLOCKS.forEach((b, i) => {
-      const e = AW.top[i];
+      const e = shown[i] ? AW.top[i] : null;
       const el = document.createElement('div');
       el.className = 'pod-label';
       el.style.left = (b.x / GW * 100) + '%';
@@ -1442,26 +1490,26 @@
       const mk = (cls, txt) => { const s = document.createElement('span'); s.className = cls; s.textContent = txt; return s; };
       const row = document.createElement('span');
       row.className = 'nmrow';
-      row.append(mk('nm', e ? e.name : '—'));
+      row.append(mk('nm', e ? e.name : (AW.top[i] ? '' : '—')));
       if (e && !e.card) row.append(medal());        // medalla también en el podio
       el.append(mk('pl', (i + 1) + 'º'), row, mk('pt', e ? e.points + ' PTS' : ''));
       podLabels.appendChild(el);
     });
   }
 
-  function renderAwardsList() {
-    renderRankList($('#awards-list'), AW.entries, (r) => AW.top.includes(r));
-  }
-
   winnersBtn.addEventListener('click', () => {
     Sfx.unlock();
+    if (AW.failed) { winnersBtn.hidden = true; showAwards(); return; }
     AW.revealed = true;
     AW.revealAt = now;
-    AW.confetti = Array.from({ length: 80 }, () => newConfetti(true));
+    AW.confetti = [];
+    AW.party = false;
     AW.handoffSound = false;
+    AW.labelMask = '';
+    renderPodLabels();
     winnersBtn.textContent = 'VER DE NUEVO';
     Sfx.whistle();
-    setTimeout(() => Sfx.goal(), 350);
+    Music.play('winner', 'winner', true);   // suena una sola vez
   });
 
   function newConfetti(anywhere) {
@@ -1479,22 +1527,6 @@
     g.fillStyle = b.c[1]; g.fillRect(b.x, b.top, b.w, 4);
     g.fillStyle = b.c[0]; g.fillRect(b.x, b.top + 4, b.w, GND - b.top - 4);
     g.fillStyle = b.c[2]; g.fillRect(b.x + b.w - 3, b.top + 4, 3, GND - b.top - 4);
-  }
-
-  const silCache = new Map();
-  function silhouette(spr) {
-    let s = silCache.get(spr);
-    if (!s) {
-      s = document.createElement('canvas');
-      s.width = spr.width; s.height = spr.height;
-      const g = s.getContext('2d');
-      g.drawImage(spr, 0, 0);
-      g.globalCompositeOperation = 'source-in';
-      g.fillStyle = '#0a0f22';
-      g.fillRect(0, 0, s.width, s.height);
-      silCache.set(spr, s);
-    }
-    return s;
   }
 
   function charSprite(c, pose, mouth, eyes) {
@@ -1520,71 +1552,85 @@
     const plan = AW.plan;
     const chars = AW.chars || [];
 
-    // Personajes en el podio
+    // Nombres: aparecen cuando cada uno llega a su puesto
+    if (plan) {
+      const shown = chars.map((c, i) => AW.revealed && t >= plan.arr[i]);
+      const mask = shown.join();
+      if (mask !== AW.labelMask) { AW.labelMask = mask; renderPodLabels(shown); }
+    }
+
+    // Personajes: antes de VER GANADORES el podio está vacío
     chars.forEach((c, i) => {
-      const b = BLOCKS[i];
-      const cx = plan ? plan.x[i] : b.x + b.w / 2;
-      if (!AW.revealed) {
-        // Antes de revelar: siluetas misteriosas
-        const spr = silhouette(charSprite(c, 'idle', 'grin', 'open'));
-        g.globalAlpha = 0.75 + Math.sin(now / 300 + i) * 0.15;
-        g.drawImage(spr, Math.round(cx) - 17, b.top - 50);
-        g.globalAlpha = 1;
-        return;
-      }
+      if (!AW.revealed || !plan) return;
       // Nico que está entregando el trofeo se dibuja aparte
-      if (plan.mode === 'deliver' && plan.nicoIdx === i && t >= plan.keys[0].t &&
+      if (plan.who === 'nico' && plan.nicoIdx === i && t >= plan.keys[0].t &&
           (!plan.back || t < plan.keys[plan.keys.length - 1].t)) return;
 
-      const delay = (2 - i) * 180;                     // caen 3º, 2º y 1º
-      const dt = t - delay;
-      if (dt < 0) return;
-      const fall = dt < 450 ? Math.round((1 - dt / 450) * -70) : 0;
+      const e = plan.entry[i];
+      if (t < e[0].t) return;                          // todavía no entra
+      if (t < plan.arr[i]) {
+        // Entrando: camina desde la derecha y salta a su puesto
+        const p = pathPos(e, t);
+        const walking = t < e[1].t;
+        const feet = Math.round(p.y) - (walking ? Math.floor(now / 110) % 2 : 0);
+        if (walking) { g.fillStyle = 'rgba(0,0,0,.3)'; g.fillRect(Math.round(p.x) - 11, GND - 1, 22, 2); }
+        g.drawImage(charSprite(c, 'idle', 'grin', 'open'), Math.round(p.x) - 17, feet - 50);
+        return;
+      }
+
+      const b = BLOCKS[i];
+      const cx = plan.x[i];
       let pose = Math.floor((now + i * 150) / 320) % 2 ? 'up' : 'siu';
       let mouth = 'open', eyes = 'happy', trophyUp = false;
-      let jump = fall ? 0 : Math.round(Math.abs(Math.sin((now + i * 200) / 180)) * 5);
-
+      let jump = Math.round(Math.abs(Math.sin((now + i * 200) / 180)) * 5);
       if (i === 0) {
-        if (plan.mode === 'nicoWins') {
-          if (dt > 450) { pose = 'up'; trophyUp = true; }
-        } else if (t >= plan.arrive && t < plan.arrive + 700) {
+        if (t >= plan.arrive && t < plan.arrive + 700) {
           pose = 'open'; mouth = 'grin'; eyes = 'open'; jump = 0;   // recibe el trofeo
         } else if (t >= plan.arrive + 700) {
           pose = 'up'; trophyUp = true;
         }
       }
-      const feet = b.top - jump + fall;
+      const feet = b.top - jump;
       g.fillStyle = 'rgba(0,0,0,.3)';
       g.fillRect(Math.round(cx) - 11, b.top - 1, 22, 2);
       g.drawImage(charSprite(c, pose, mouth, eyes), Math.round(cx) - 17, feet - 50);
       if (trophyUp) drawTrophy(g, cx, feet - 44);
     });
 
-    // Nico entregando el trofeo
-    if (AW.revealed && plan && plan.mode === 'deliver' && t >= plan.keys[0].t) {
+    // Llega el 1º: confeti y celebración
+    if (AW.revealed && plan && t >= plan.party && !AW.party) {
+      AW.party = true;
+      AW.confetti = Array.from({ length: 80 }, () => newConfetti(true));
+      Sfx.goal();
+    }
+
+    // Entrega del trofeo: Nico (o el tío Pipe, si Nico es el 1º)
+    if (AW.revealed && plan && plan.keys && t >= plan.keys[0].t) {
       const p = pathPos(plan.keys, t);
       const returned = plan.back && t >= plan.keys[plan.keys.length - 1].t;
+      const isUncle = plan.who === 'uncle';
       if (!returned) {
         const atWinner = t >= plan.arrive;
         const handing = atWinner && t < plan.arrive + 700;
-        let pose = 'open', mouth = 'grin', eyes = 'open', hop = 0;
-        if (atWinner && !handing && !(plan.back && t >= plan.arrive + 3200)) {
-          pose = 'up'; mouth = 'open'; eyes = 'happy';
-          hop = Math.round(Math.abs(Math.sin(now / 170)) * 5);
-        }
+        const celebrating = atWinner && !handing && !(plan.back && t >= plan.arrive + 3200);
+        let hop = 0, spr;
+        if (celebrating) hop = Math.round(Math.abs(Math.sin(now / 170)) * 5);
+        if (isUncle) spr = celebrating ? S.uncle('jump', 'open', 'happy') : S.uncle('stand', 'grin', 'open');
+        else spr = celebrating ? S.nico('up', 'open', 'happy') : S.nico('open', 'grin', 'open');
         const bob = p.moving && !atWinner ? Math.floor(now / 120) % 2 : 0;
         const feet = p.y - hop - bob;
         g.fillStyle = 'rgba(0,0,0,.3)';
         const groundY = p.y >= GND - 1 ? GND : (p.x > 85 && p.x < 155 ? BLOCKS[0].top : p.y);
         g.fillRect(Math.round(p.x) - 11, Math.round(groundY) - 1, 22, 2);
-        g.drawImage(S.nico(pose, mouth, eyes), Math.round(p.x) - 17, Math.round(feet) - 50);
-        // Trofeo: en manos de Nico → pasa al ganador
+        g.drawImage(spr, Math.round(p.x) - Math.round(spr.width / 2), Math.round(feet) - spr.height);
+        // Trofeo: en sus manos → pasa al ganador
+        const handY = feet - (isUncle ? 24 : 22);
         if (!atWinner) {
-          drawTrophy(g, p.x, feet - 22);
+          drawTrophy(g, p.x, handY);
         } else if (handing) {
           const k = clamp((t - plan.arrive - 250) / 450, 0, 1);
           const wx = plan.x[0], wFeet = BLOCKS[0].top;
-          drawTrophy(g, lerp(p.x, wx, k), lerp(feet - 22, wFeet - 44, k));
+          drawTrophy(g, lerp(p.x, wx, k), lerp(handY, wFeet - 44, k));
           if (k > 0.95 && !AW.handoffSound) { AW.handoffSound = true; Sfx.goal(); }
         }
       }

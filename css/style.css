@@ -136,21 +136,16 @@ body::after {
 }
 
 /* ---------- Premiación ---------- */
-#screen-awards .wrap { gap: 12px; }
+#screen-awards { overflow-y: auto; }
+#screen-awards .wrap { gap: 12px; height: auto; align-self: flex-start; min-height: 100%; padding-bottom: 12px; }
 #screen-awards .title { font-size: clamp(14px, 4.4vw, 26px); }
 .stage.awards-stage {
   flex: 0 0 auto;
   height: min(50vh, calc((min(100vw, 1100px) - 32px) * 0.69 + 28px));
 }
-#btn-winners { align-self: center; min-width: min(100%, 320px); }
-.awards-list {
-  flex: 1 1 auto;
-  min-height: 140px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-.awards-list h3 { position: sticky; top: -16px; background: #000; padding: 6px 0; margin-bottom: 10px; z-index: 1; }
-.awards-list li .pos { width: 3em; }
+.winners-row { display: flex; justify-content: center; align-items: stretch; gap: 12px; }
+#btn-winners { flex: 0 1 320px; min-width: 0; }
+.winners-row .end-music { flex: 0 0 auto; margin: 4px; }
 .pod-label {
   position: absolute;
   display: flex;
@@ -179,6 +174,13 @@ body::after {
   z-index: 44;
   pointer-events: none;
 }
+/* Fila del inicio: VER RANKING y, a su derecha, la nota musical (misma altura, 40px entre los dos) */
+.credit .credit-row {
+  display: flex;
+  align-items: stretch;
+  gap: 40px;
+}
+.credit .credit-row[hidden] { display: none; }
 /* "VER RANKING": mismo estilo y altura que el botón SALTAR */
 .credit .rank-open {
   pointer-events: auto;
@@ -193,6 +195,14 @@ body::after {
   touch-action: manipulation;
 }
 .credit .rank-open:hover { color: var(--yellow); }
+.credit .credit-music {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  padding: 0 6px;
+}
+.credit .credit-music svg { width: 14px; height: 14px; }
+.credit .credit-music.off { color: #777; }
 .credit .rank-open:focus-visible { outline: 3px dashed var(--yellow); outline-offset: 6px; }
 /* En el inicio hay más espacio abajo para el botón VER RANKING */
 #screen-intro { padding-bottom: max(94px, env(safe-area-inset-bottom)); }
@@ -474,7 +484,7 @@ canvas {
 .hud-title span { color: var(--yellow); }
 .hud-stats {
   display: grid;
-  grid-template-columns: 1.25fr 1fr 1fr auto;
+  grid-template-columns: 1.25fr 1fr 1fr auto auto;
   gap: 10px;
   padding: 0 4px;
 }
@@ -523,6 +533,11 @@ canvas {
 .mute.off .waves { display: none; }
 .mute.off .cross { display: inline; }
 .mute.off { color: #777; }
+/* Botón de música (nota musical): apagado = gris y tachado */
+.music-btn .slash { display: none; }
+.music-btn.off .slash { display: inline; }
+.music-btn.off { color: #777; }
+.music-btn:focus-visible { outline: 3px dashed var(--yellow); outline-offset: 6px; }
 
 /* ---------- Zona de juego ---------- */
 .play {
@@ -594,7 +609,8 @@ canvas {
 
 /* ---------- Final ---------- */
 #screen-end { overflow-y: auto; }
-#screen-end .wrap { height: auto; min-height: 100%; justify-content: center; padding-bottom: 8px; }
+/* padding abajo: espacio para que "Creado por" (fijo abajo) no tape los botones al bajar del todo */
+#screen-end .wrap { height: auto; align-self: flex-start; min-height: 100%; justify-content: center; padding-bottom: 12px; }
 .end-top { display: grid; gap: 22px; }
 .end-top .stage { flex: none; height: clamp(150px, 28vh, 260px); }
 .record {
@@ -662,15 +678,36 @@ canvas {
 .pod-label .nmrow { display: flex; align-items: center; justify-content: center; gap: 1cqw; max-width: 100%; min-width: 0; }
 .pod-label .nmrow .md { font-size: 2.6cqw; }
 
-/* Pantalla final: todos los puntajes, con scroll propio */
-#screen-end .ranking ol { max-height: min(42vh, 360px); overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+/* "VER RANKING" en la pantalla final y en la premiación: de extremo a extremo, como los cuadros
+   de resultados (que tienen 4px de margen a cada lado), y abre el mismo popup del inicio */
+.btn.btn-rank {
+  margin: 0 4px;
+  background: #000;
+  box-shadow: 0 0 0 3px #fff;
+}
+.btn.btn-rank:hover { color: var(--yellow); filter: none; }
+.btn.btn-rank:active, .btn.btn-rank.pressed { transform: translateY(2px); box-shadow: 0 0 0 3px #fff; }
 @media (max-width: 420px) {
   .ranking li { gap: 6px; }
   .ranking li .dt { font-size: .65em; }
 }
 .ranking .note { margin-top: 14px; font-size: 8px; color: #777; text-align: center; line-height: 1.6; }
-.end-actions { display: flex; flex-wrap: wrap; gap: 12px; }
-.end-actions .btn { flex: 1 1 220px; }
+.end-actions { display: flex; gap: 12px; }
+.end-actions .btn { flex: 1 1 0; min-width: 0; }
+.end-actions .end-music { flex: 0 0 auto; margin: 4px; min-height: 52px; }
+
+/* Popup del ranking: nota musical arriba a la izquierda (la X va a la derecha) */
+.pop-music {
+  position: absolute;
+  top: -18px;
+  left: -18px;
+  width: 40px;
+  height: 40px;
+  z-index: 2;
+  border: 0;
+  box-shadow: 0 0 0 4px #000, 0 0 0 7px #fff;
+}
+.pop-music svg { width: 22px; }
 
 /* ---------- Globo de cómic (récord) ---------- */
 .bubble {

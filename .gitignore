@@ -6,3 +6,6 @@ demo-podio.html
 Thumbs.db
 .vscode/
 .idea/
+
+# Audio original sin comprimir (se usa la versión .m4a)
+songs/*.wav

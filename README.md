@@ -61,8 +61,9 @@ La página es **responsive** (móvil vertical y horizontal, tablet y desktop) y 
 - El arco tiene **5 zonas**. Nico ocupa una y se mueve de a una zona por paso, de lado a lado, rebotando en los palos.
 - **Cada gol lo hace más rápido:** tiempo entre pasos = `850 ms × 0,87^goles` (mínimo 170 ms). No se le avisa al jugador.
 - **Sorpresas:** desde el 3er gol, en cada paso puede cambiar de dirección (7 % por gol, máximo 30 %).
-- **Últimos 15 segundos:** un paso cada **100 ms** (10 zonas por segundo), sin aviso.
-- **Segundo Nico:** si a las **0:15** el jugador tiene **70 puntos o más**, aparece un segundo Nico idéntico, sin aviso (se revisa solo en ese instante; si llega a 70 después, no aparece). Los dos se mueven a la vez y **nunca comparten zona ni se atraviesan**: si van a chocar, rebotan entre sí (y si no hay espacio, se quedan quietos ese paso). Si cualquiera de los dos está en la zona del balón, es atajada.
+- **Últimos 20 segundos:** un paso cada **100 ms** (10 zonas por segundo), sin aviso.
+- **Segundo Nico:** si a las **0:20** el jugador tiene **70 puntos o más**, aparece un segundo Nico idéntico, sin aviso (se revisa solo en ese instante; si llega a 70 después, no aparece). **Cada uno se mueve a su manera:** su propio ritmo (±30 % alrededor de un paso cada 100 ms) y sus propios cambios de dirección (al menos 20 % por paso), así que nunca se mueven en espejo. Pueden coincidir en la misma zona. Si cualquiera de los dos está en la zona del balón, es atajada.
+- **Al final del partido** (por tiempo o por roja) el segundo Nico se va saltando y queda uno solo.
 - El balón tarda siempre **650 ms** en llegar. **Nico ataja si está en la zona apuntada en el momento en que llega el balón.**
 
 ### Puntos
@@ -79,6 +80,17 @@ La página es **responsive** (móvil vertical y horizontal, tablet y desktop) y 
 - La distancia se mide con la posición de Nico **cuando llega el balón** (con dos Nicos, contra el más cercano).
 - **x2 con dos Nicos:** mientras el segundo Nico está en la cancha, los goles (6 / 4 / 2) y el bono de hat-trick (+6) valen el doble; el mensaje de gol lo indica ("+6 PUNTOS · x2"). Los castigos de tarjetas no se duplican.
 - El puntaje nunca baja de 0.
+
+### 🤓 Dato curioso: el puntaje máximo posible
+
+Con estas reglas, el máximo teórico en los 90 segundos es **255 puntos** (52 goles sin tarjetas).
+
+- El reloj corre durante el apuntado, el vuelo del balón (0,65 s) y la pausa de GOL (1,1 s), así que cada tiro gasta **como mínimo 1,75 s**. La pausa del hat-trick detiene el reloj, y un tiro pateado antes de 0:00 cuenta aunque el balón llegue después. En total caben **52 tiros**.
+- **Primeros 70 s:** 40 goles × 3 = 120, más 13 hat-tricks × 3 = 39 → **159** (más de 70, así que aparece el segundo Nico).
+- **Últimos 20 s (x2):** 12 goles × 6 = 72, más 4 hat-tricks × 6 = 24 → **96**.
+- **Total: 159 + 96 = 255.**
+
+Para lograrlo habría que patear sin ningún tiempo de reacción, meter todos los goles pegaditos a Nico y no fallar ni uno, incluso cuando Nico da un paso cada 0,1 s. Es prácticamente imposible: con el tiempo de reacción de una persona (unos 0,3 s por tiro) caben unos 44 tiros, y muchos goles valen 1 o 2 puntos.
 
 ### Eventos
 
@@ -186,8 +198,9 @@ Los valores principales están al inicio de [`js/game.js`](js/game.js):
 | `GAME_MS` | `90000` | Duración del partido (ms) |
 | `FLIGHT_MS` | `650` | Lo que tarda el balón en llegar |
 | `BASE_STEP` / `SPEEDUP` / `MIN_STEP` | `850` / `0.87` / `170` | Velocidad de Nico según los goles |
-| `FRENZY_MS` / `FRENZY_STEP` | `15000` / `100` | Últimos segundos súper rápidos |
-| `TWO_KEEPERS_MIN_POINTS` | `70` | Puntos a las 0:15 para que aparezca el segundo Nico |
+| `FRENZY_MS` / `FRENZY_STEP` | `20000` / `100` | Últimos segundos súper rápidos |
+| `TWO_KEEPERS_MIN_POINTS` | `70` | Puntos a las 0:20 para que aparezca el segundo Nico |
+| `TWO_KEEPERS_JITTER` / `TWO_KEEPERS_MIN_REVERSE` | `0.3` / `0.2` | Con dos Nicos: variación de ritmo y cambios de dirección de cada uno |
 | `TWO_KEEPERS_MULT` | `2` | Multiplicador de puntos con dos Nicos en la cancha |
 | `HATTRICK_BONUS` / `YELLOW_PENALTY` / `RED_PENALTY` | `3` / `2` / `3` | Bonos y castigos |
 | `AWARDS_START` | 21 nov 2026, 21:00 UTC | Inicio de la premiación (dura 5 h) |

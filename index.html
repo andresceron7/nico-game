@@ -76,6 +76,12 @@
               <g class="cross" fill="currentColor"><rect x="8" y="4" width="1" height="1"/><rect x="9" y="5" width="1" height="2"/><rect x="10" y="4" width="1" height="1"/><rect x="8" y="7" width="1" height="1"/><rect x="10" y="7" width="1" height="1"/></g>
             </svg>
           </button>
+          <button type="button" class="mute music-btn" aria-label="Apagar música">
+            <svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
+            <g fill="currentColor"><rect x="3" y="7" width="2" height="1"/><rect x="2" y="8" width="4" height="2"/><rect x="3" y="10" width="2" height="1"/><rect x="5" y="1" width="1" height="8"/><rect x="6" y="1" width="3" height="1"/><rect x="8" y="2" width="2" height="1"/><rect x="9" y="3" width="1" height="2"/></g>
+            <g class="slash" fill="currentColor"><rect x="1" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="8" y="8" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/></g>
+          </svg>
+          </button>
         </div>
       </header>
 
@@ -137,15 +143,17 @@
         <div class="hud-box"><span class="lbl">PUNTERÍA</span><span class="val" id="st-acc">0%</span></div>
       </div>
 
-      <div class="ranking">
-        <h3>RANKING</h3>
-        <ol id="rank-list"></ol>
-        <p class="note" id="rank-note">PUNTAJES DE ESTE DISPOSITIVO</p>
-      </div>
+      <button type="button" class="btn btn-rank" id="btn-end-ranking">VER RANKING</button>
 
       <div class="end-actions">
         <button type="button" class="btn btn-play" id="btn-again">JUGAR OTRA VEZ</button>
         <button type="button" class="btn" id="btn-rename">CAMBIAR JUGADOR</button>
+        <button type="button" class="mute end-music music-btn" aria-label="Apagar música">
+          <svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
+          <g fill="currentColor"><rect x="3" y="7" width="2" height="1"/><rect x="2" y="8" width="4" height="2"/><rect x="3" y="10" width="2" height="1"/><rect x="5" y="1" width="1" height="8"/><rect x="6" y="1" width="3" height="1"/><rect x="8" y="2" width="2" height="1"/><rect x="9" y="3" width="1" height="2"/></g>
+          <g class="slash" fill="currentColor"><rect x="1" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="8" y="8" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/></g>
+        </svg>
+        </button>
       </div>
     </div>
   </section>
@@ -162,24 +170,43 @@
         </div>
       </div>
 
-      <button type="button" class="btn btn-play" id="btn-winners">VER GANADORES</button>
-
-      <div class="ranking awards-list">
-        <h3>TODOS LOS PUNTAJES</h3>
-        <ol id="awards-list"></ol>
+      <div class="winners-row">
+        <button type="button" class="btn btn-play" id="btn-winners">VER GANADORES</button>
+        <button type="button" class="mute end-music music-btn" aria-label="Apagar música">
+          <svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
+          <g fill="currentColor"><rect x="3" y="7" width="2" height="1"/><rect x="2" y="8" width="4" height="2"/><rect x="3" y="10" width="2" height="1"/><rect x="5" y="1" width="1" height="8"/><rect x="6" y="1" width="3" height="1"/><rect x="8" y="2" width="2" height="1"/><rect x="9" y="3" width="1" height="2"/></g>
+          <g class="slash" fill="currentColor"><rect x="1" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="8" y="8" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/></g>
+        </svg>
+        </button>
       </div>
+
+      <button type="button" class="btn btn-rank" id="btn-awards-ranking" hidden>VER RANKING</button>
     </div>
   </section>
 
   <!-- ===================== CRÉDITOS ===================== -->
   <footer class="credit">
-    <button type="button" class="rank-open" id="btn-ranking" hidden>VER RANKING</button>
+    <div class="credit-row" id="credit-row" hidden>
+      <button type="button" class="rank-open" id="btn-ranking">VER RANKING</button>
+      <button type="button" class="rank-open credit-music music-btn" aria-label="Apagar música">
+        <svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
+        <g fill="currentColor"><rect x="3" y="7" width="2" height="1"/><rect x="2" y="8" width="4" height="2"/><rect x="3" y="10" width="2" height="1"/><rect x="5" y="1" width="1" height="8"/><rect x="6" y="1" width="3" height="1"/><rect x="8" y="2" width="2" height="1"/><rect x="9" y="3" width="1" height="2"/></g>
+        <g class="slash" fill="currentColor"><rect x="1" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="8" y="8" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/></g>
+      </svg>
+      </button>
+    </div>
     <button type="button" class="credit-link" id="btn-credit">Creado por: Mi tío Pipe</button>
   </footer>
 
   <div class="photo-modal" id="rank-modal" hidden role="dialog" aria-modal="true" aria-label="Ranking">
     <div class="rank-pop">
       <button type="button" class="photo-close" id="rank-close" aria-label="Cerrar ranking">X</button>
+      <button type="button" class="mute pop-music music-btn" aria-label="Apagar música">
+        <svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
+        <g fill="currentColor"><rect x="3" y="7" width="2" height="1"/><rect x="2" y="8" width="4" height="2"/><rect x="3" y="10" width="2" height="1"/><rect x="5" y="1" width="1" height="8"/><rect x="6" y="1" width="3" height="1"/><rect x="8" y="2" width="2" height="1"/><rect x="9" y="3" width="1" height="2"/></g>
+        <g class="slash" fill="currentColor"><rect x="1" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="8" y="8" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/></g>
+      </svg>
+      </button>
       <div class="ranking rank-pop-box">
         <h3>RANKING</h3>
         <ol id="rank-pop-list"></ol>
@@ -206,6 +233,7 @@
   <script src="js/names.js"></script>
   <script src="js/sprites.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/music.js"></script>
   <script src="js/ranking.js"></script>
   <script src="js/game.js"></script>
 </body>
