@@ -17,7 +17,7 @@ const Music = (() => {
   'use strict';
   const TRACKS = {
     game: 'songs/game-song.mp3',
-    match: 'songs/match-song.m4a',
+    match: 'songs/match-song.mp3',
     podium: 'songs/podium-song.mp3',
     winner: 'songs/winner-song.mp3',
   };
