@@ -1035,10 +1035,6 @@
   }
 
   // ---------- Listas de puntajes (popup "VER RANKING") ----------
-  const fmtDate = (ms) => new Intl.DateTimeFormat('es-CO', {
-    timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric',
-  }).format(new Date(ms));
-
   function rankStatus(ol, kind, retry) {
     ol.replaceChildren();
     const li = document.createElement('li');
@@ -1066,6 +1062,8 @@
     return m;
   }
 
+  const goalsTxt = (n) => n + (n === 1 ? ' GOL' : ' GOLES');
+
   function renderRankList(ol, list, isMine) {
     if (!list.length) { rankStatus(ol, 'empty'); return; }
     ol.replaceChildren();
@@ -1079,9 +1077,8 @@
       else if (!r.card) li.append(medal());
       li.append(
         mk('dots', ''),
-        mk('pts', (r.points || 0) + ' PTS'),
-        mk('gl', (r.goals || 0) + 'G'),
-        mk('dt', fmtDate(r.date)),
+        mk('dt', goalsTxt(r.goals || 0)),          // goles, con el estilo que tenía la fecha
+        mk('pts', (r.points || 0) + ' PTS'),       // los puntos van al final
       );
       frag.appendChild(li);
     });

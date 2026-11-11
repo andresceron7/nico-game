@@ -214,7 +214,6 @@ body::after {
   animation: pop .35s steps(4) both;
 }
 @media (max-width: 420px) {
-  .ranking li .gl { display: none; }        /* más espacio para el nombre */
   .ranking li .dots { min-width: 6px; }
   .ranking.rank-pop-box { padding: 14px 10px; }
 }
@@ -633,7 +632,6 @@ canvas {
 .ranking li .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ranking li .dots { flex: 1; border-bottom: 2px dotted #444; min-width: 12px; }
 .ranking li .pts { color: var(--yellow); white-space: nowrap; }
-.ranking li .gl { color: #888; white-space: nowrap; font-size: .8em; }
 .ranking li .rc {
   display: inline-block; width: .7em; height: 1em; background: var(--red);
   box-shadow: 0 0 0 2px #000; flex: none; align-self: center;

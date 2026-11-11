@@ -17,6 +17,7 @@ El **21 de noviembre de 2026 a las 4:00 pm (hora Colombia)** el juego se cierra 
 - [Cómo se juega](#cómo-se-juega)
 - [Pantallas](#pantallas)
 - [Reglas del juego](#reglas-del-juego)
+- [Música y sonido](#música-y-sonido)
 - [Premiación del 21 de noviembre](#premiación-del-21-de-noviembre)
 - [Ranking global con Firebase](#ranking-global-con-firebase)
 - [Estructura del proyecto](#estructura-del-proyecto)
@@ -45,10 +46,10 @@ La página es **responsive** (móvil vertical y horizontal, tablet y desktop) y 
 
 | Pantalla | Qué muestra |
 |---|---|
-| **Inicio** | Título, invitación al cumpleaños, Nico explicando el juego (texto letra por letra), reglas visuales (hat-trick, amarilla, roja), campo de nombre, botón **VER RANKING** y crédito "Creado por: Mi tío Pipe". |
-| **Juego** | Marcador (tiempo, goles, puntos, sonido), estadio pixel art, arco con 5 zonas, Nico moviéndose, flecha de apuntado y botones ◀ ▶ PATEAR. |
-| **Final** | Resultado, Nico emocionado diciendo una frase según el desempeño, estadísticas (puntos, goles, tiros, puntería) y **todos** los puntajes del ranking. Si es récord, Nico salta y dice *"¡SIIIUUUUUU! ¡Rompiste el récord!"*. |
-| **Popup "Ver ranking"** | Desde el inicio: lista completa de puntajes con fecha (no disponible mientras se juega). |
+| **Inicio** | Título, invitación al cumpleaños, Nico explicando el juego (texto letra por letra), reglas visuales (hat-trick, amarilla, roja), campo de nombre, botón **VER RANKING** con la **nota musical ♪** a su derecha y crédito "Creado por: Mi tío Pipe". |
+| **Juego** | Marcador (tiempo, goles, puntos, botón de **efectos** 🔊 y botón de **música** ♪), estadio pixel art, arco con 5 zonas, Nico moviéndose, flecha de apuntado y botones ◀ ▶ PATEAR. |
+| **Final** | Resultado, Nico emocionado diciendo una frase según el desempeño, estadísticas (puntos, goles, tiros, puntería), botón **VER RANKING** de lado a lado y botones JUGAR OTRA VEZ, CAMBIAR JUGADOR y ♪. Si es récord, Nico salta y dice *"¡SIIIUUUUUU! ¡Rompiste el récord!"*. |
+| **Popup "Ver ranking"** | Desde el inicio, la pantalla final o la premiación (nunca mientras se juega): lista completa de puntajes con scroll propio; cada fila muestra posición, nombre, goles y, al final, los puntos. Desde la pantalla final resalta en amarillo la partida recién jugada; desde la premiación, los 3 del podio. Tiene su propia nota musical ♪. |
 | **Foto con el tío Pipe** | Al tocar "Creado por: Mi tío Pipe": marco de foto pixel animado (7 s en loop) con Nico y su tío: se dan la mano, saltan, celebran *"SIIUUUU"* estilo CR7, se ríen y posan abrazados. |
 | **Premiación** | Solo el 21 de noviembre de 2026, de 4:00 pm a 9:00 pm (ver abajo). |
 
@@ -101,16 +102,44 @@ Para lograrlo habría que patear sin ningún tiempo de reacción, meter todos lo
 
 ---
 
+## Música y sonido
+
+Hay dos sonidos independientes, cada uno con su botón, así que se puede tener **solo efectos, solo música, ambos o ninguno**:
+
+- **Efectos** (botón 🔊, solo en el juego): sonidos 8-bit generados con código (gol, atajada, pito, celebración…).
+- **Música** (botón ♪): canciones en [`songs/`](songs). Apagada = nota gris y tachada.
+
+| Dónde | Canción | Volumen |
+|---|---|---|
+| Inicio (y su popup de ranking) | `game-song.mp3`, en loop | normal |
+| Partido | `match-song.mp3`, en loop, empieza desde el inicio | moderado, para que se oigan los efectos |
+| Pantalla final | `podium-song.mp3`, en loop | medio |
+| Premiación | `winner-song.mp3`, **una sola vez** al tocar VER GANADORES (VER DE NUEVO la repite) | medio-alto |
+
+- **Foto con el tío Pipe:** mientras está abierta, la música baja a la mitad y al cerrarla vuelve a su volumen.
+- **Arranque:** los navegadores no dejan sonar nada hasta que el usuario toca la página, así que la música empieza con el primer toque o tecla.
+- Si el usuario apaga la música (o los efectos), el navegador lo recuerda para la próxima visita.
+- Con la pestaña oculta o el celular bloqueado, la música se pausa y sigue al volver.
+- El volumen se controla con Web Audio, así que también funciona en iPhone. Abriendo `index.html` con doble clic (sin servidor) la música suena, pero sin el control fino de volumen.
+
+---
+
 ## Premiación del 21 de noviembre
 
 Del **21 de noviembre de 2026, 4:00 pm** al **9:00 pm** (hora Colombia, UTC−5) no se puede jugar. Quien entre a la página ve:
 
-1. **Podio** con los 3 mejores puntajes (1º al centro, 2º izquierda, 3º derecha) y sus siluetas.
-2. Botón **VER GANADORES**: los 3 aparecen con uniforme de fútbol (rojo, azul y verde), celebrando entre confeti.
+1. **Podio vacío** (1º al centro, 2º izquierda, 3º derecha), solo con los puestos: los nombres son sorpresa.
+2. Botón **VER GANADORES** (con la nota musical ♪ a su derecha): suena `winner-song.mp3` y los ganadores suben **uno por uno, primero el 3º, luego el 2º y por último el 1º**. Cada uno entra caminando desde fuera de la pantalla por la derecha y salta a su puesto; su nombre y puntaje aparecen cuando llega.
+   - Llevan uniforme de fútbol (rojo, azul y verde).
    - **Niño o niña** según el nombre (lista de nombres comunes en español y, si no está, termina en "a" = niña). Las niñas llevan pelo largo y moño.
    - Si un nombre **empieza por "Nico" o "Niko"** (Nico, Nico Pro, Nicolás, Niko) o es exactamente **"Nic"** o **"Nik"**, aparece el arquero Nico. *Nicole* o *Nicol* cuentan como niñas.
-3. **Entrega del trofeo:** Nico entra caminando con el trofeo, se lo entrega al 1º y celebran juntos. Si Nico está en 2º o 3º, baja de su puesto, entrega el trofeo y vuelve. Si Nico gana, celebra en el 1º con el trofeo.
-4. Debajo, la **lista de todos los puntajes** con scroll (el podio siempre visible).
+3. Cuando llega el 1º: **confeti** y sonido de celebración.
+4. **Entrega del trofeo:**
+   - Nico **no está en el podio:** entra caminando con el trofeo, se lo entrega al 1º y celebran juntos.
+   - Nico está **2º o 3º:** baja de su puesto, entrega el trofeo, celebran y vuelve a su lugar.
+   - Nico es el **1º:** entra el **tío Pipe** (el mismo de la foto "Creado por: Mi tío Pipe") con el trofeo, se lo entrega a Nico y celebran juntos.
+5. **VER DE NUEVO** repite toda la animación (y la canción).
+6. Debajo, el botón **VER RANKING** abre el popup con todos los puntajes.
 
 En el podio cada nombre aparece una sola vez con su mejor puntaje (los nombres se comparan tal cual: "ANDRES" y "ANDREZ" son personas distintas). Si alguien está jugando a las 4:00 pm, termina su partida y su puntaje cuenta. A las 9:00 pm la página vuelve sola al juego.
 
@@ -133,7 +162,6 @@ Los puntajes se guardan en **Cloud Firestore** (proyecto `nico-game`), sin auten
 
 - **Orden:** más puntos → más goles → menos tiros → el más antiguo.
 - **Medalla de plata** 🥈 junto al nombre (en las listas y en el podio) si la partida terminó **sin ninguna tarjeta**; la **tarjetita roja** si terminó expulsado.
-- **Fechas** en formato colombiano `dd/mm/aaaa`.
 - **Estados en pantalla:** "Cargando ranking…", "No se pudo cargar el ranking, intenta de nuevo" (con botón REINTENTAR) y "Aún no hay puntajes, ¡sé el primero!".
 - **Sin internet:** la partida queda en cola en el navegador y se sube sola cuando vuelve la conexión.
 - **Seguridad:** [`firestore.rules`](firestore.rules) permite leer a todos y crear solo puntajes con el formato correcto; nadie puede modificar ni borrar desde la página. La configuración de [`js/firebase-config.js`](js/firebase-config.js) no es secreta: Firebase está diseñado para que vaya en la página.
@@ -150,7 +178,9 @@ css/style.css           Estilos pixel art y responsive
 js/firebase-config.js   Configuración del proyecto de Firebase
 js/names.js             ¿Es Nico? ¿Niño o niña? (a partir del nombre)
 js/sprites.js           Pixel art dibujado con código: Nico, tío Pipe, árbitro, ganadores, balón, trofeo, fondo
-js/audio.js             Sonidos 8-bit generados con Web Audio (sin archivos)
+js/audio.js             Efectos 8-bit generados con Web Audio (sin archivos)
+js/music.js             Música de fondo: qué canción suena, volumen, loop y botón ♪
+songs/                  Canciones en MP3 (intro, partido, ranking y premiación)
 js/ranking.js           Ranking global en Firestore + cola sin conexión
 js/game.js              Lógica: pantallas, juego, eventos, final, premiación, foto, popups
 firestore.rules         Reglas de seguridad de Firestore
@@ -158,7 +188,7 @@ docs/HISTORIAL.md       Historial del desarrollo
 ```
 
 - **Sin build ni dependencias:** HTML, CSS y JavaScript plano. Firebase se carga desde su CDN oficial (SDK v10, versión *compat*).
-- **Todo el arte es código:** los personajes y el fondo se dibujan con rectángulos en `<canvas>`, sin imágenes.
+- **Todo el arte es código:** los personajes y el fondo se dibujan con rectángulos en `<canvas>`, sin imágenes. Los únicos archivos de medios son las canciones de `songs/`.
 - **Fuentes:** Press Start 2P (pixel), Bangers (globos de cómic) y Montserrat (crédito), desde Google Fonts.
 
 ---
@@ -204,6 +234,15 @@ Los valores principales están al inicio de [`js/game.js`](js/game.js):
 | `TWO_KEEPERS_MULT` | `2` | Multiplicador de puntos con dos Nicos en la cancha |
 | `HATTRICK_BONUS` / `YELLOW_PENALTY` / `RED_PENALTY` | `3` / `2` / `3` | Bonos y castigos |
 | `AWARDS_START` | 21 nov 2026, 21:00 UTC | Inicio de la premiación (dura 5 h) |
+
+La música se ajusta al inicio de [`js/music.js`](js/music.js):
+
+| Constante | Valor | Qué controla |
+|---|---|---|
+| `TRACKS` | rutas en `songs/` | Qué archivo es cada canción |
+| `VOL` | intro `0.5` · partido `0.35` · ranking `0.32` · premiación `0.42` | Volumen de cada momento (`match-song` viene grabada más bajita, por eso su número es mayor) |
+| `DUCK` | `0.5` | Cuánto baja la música con la foto del tío Pipe |
+| `NO_LOOP` | `winner` | Canciones que suenan una sola vez |
 
 ---
 
