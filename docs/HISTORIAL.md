@@ -109,6 +109,14 @@ Registro de cómo se construyó **Penales con Nico**, paso a paso, en el orden e
 - Solo cuenta cuando el segundo Nico ya está en la cancha: el tiro que estaba en el aire a las 0:15 vale normal.
 - No afecta a Firebase: el puntaje sigue siendo un entero en el mismo campo.
 
+## 14. Nuevo horario de la premiación y balón más grande
+
+*21 de noviembre de 2026.*
+
+- La premiación pasa a ser **de 5:00 pm a 11:59 pm** (hora Colombia), en lugar de 4:00 pm a 9:00 pm.
+- **Ranking oculto durante la premiación:** no aparece VER RANKING en el podio ni en la pantalla final (para quien termina su partida en ese rato). A las 11:59 pm vuelve a verse normalmente.
+- **Balón al triple** de tamaño (27 px en el punto penal); la sombra y la flecha de apuntado se ajustaron a ese tamaño.
+
 ---
 
 ### Cómo se verificó

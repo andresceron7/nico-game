@@ -236,8 +236,10 @@
     for (const [px, py] of pts) g.fillRect(Math.round(px) - 1, Math.round(py) - 1, 2, 2);
   }
 
+  // Tamaño del balón (en píxeles del juego) en el punto penal; al llegar al arco se ve al 60 %
+  const BALL_PX = 27;
   function drawBall(g, x, y, sc, frame) {
-    const s = Math.max(5, Math.round(9 * sc));
+    const s = Math.max(5, Math.round(BALL_PX * sc));
     g.drawImage(S.ball(frame), Math.round(x - s / 2), Math.round(y - s / 2), s, s);
   }
 
@@ -480,7 +482,7 @@
   }
 
   function startGame() {
-    // Durante la premiación (21 nov, 4–9 pm) no se puede jugar
+    // Durante la premiación (21 nov, 5:00–11:59 pm) no se puede jugar
     if (awardsActive()) { showAwards(); return; }
     resetGame();
     showScreen('game');
@@ -855,7 +857,7 @@
           g.fillRect(Math.round(b.tx + Math.cos(a) * rr), Math.round(b.ty + Math.sin(a) * rr), 1, 1);
         }
       }
-      drawShadow(g, b.tx, GOAL.line - 1, 5);
+      drawShadow(g, b.tx, GOAL.line - 1, BALL_PX * 0.55);
       drawBall(g, b.tx, y, 0.6, 0);
     }
 
@@ -899,16 +901,17 @@
 
     // Balón en el punto penal / volando
     if (inEvent) {
-      drawShadow(g, SPOT.x, SPOT.y + 4, 9);
+      drawShadow(g, SPOT.x, SPOT.y + BALL_PX / 2, BALL_PX);
       drawBall(g, SPOT.x, SPOT.y, 1, 0);
     } else if (aiming) {
       const tx = sectorX(G.aim), ty = GOAL.top + 34;
       const ang = Math.atan2(ty - (SPOT.y - 8), tx - SPOT.x);
       const len = 26 + (Math.floor(now / 200) % 2) * 3;
       if (G.phase === 'aim') {
-        drawPixelArrow(g, SPOT.x, SPOT.y - 9, SPOT.x + Math.cos(ang) * len, SPOT.y - 9 + Math.sin(ang) * len, '#ffd23f');
+        const ay = SPOT.y - BALL_PX / 2 - 4;   // la flecha sale justo encima del balón
+        drawPixelArrow(g, SPOT.x, ay, SPOT.x + Math.cos(ang) * len, ay + Math.sin(ang) * len, '#ffd23f');
       }
-      drawShadow(g, SPOT.x, SPOT.y + 4, 9);
+      drawShadow(g, SPOT.x, SPOT.y + BALL_PX / 2, BALL_PX);
       drawBall(g, SPOT.x, SPOT.y, 1, 0);
     } else if (b && G.phase === 'flight') {
       const t = clamp((now - b.start) / FLIGHT_MS, 0, 1);
@@ -916,7 +919,7 @@
       const x = lerp(SPOT.x, b.tx, e);
       const y = lerp(SPOT.y, b.ty, e) - Math.sin(Math.PI * t) * 10;
       const sc = lerp(1, 0.6, e);
-      drawShadow(g, x, lerp(SPOT.y + 4, GOAL.line + 1, e), 9 * sc);
+      drawShadow(g, x, lerp(SPOT.y + BALL_PX / 2, GOAL.line + 1, e), BALL_PX * sc);
       drawBall(g, x, y, sc, Math.floor(now / 60) % 2);
     }
 
@@ -1297,6 +1300,7 @@
   let rankOpener = null;
   function openRanking(e) {
     if (!['intro', 'end', 'awards'].includes(state.screen)) return;
+    if (awardsActive()) return;                       // durante la premiación el ranking está oculto
     rankOpener = (e && e.currentTarget) || rankOpenBtn;
     Sfx.unlock();
     $('#rank-pop-note').textContent = Ranking.isGlobal ? 'RANKING GLOBAL · TODOS LOS PUNTAJES' : 'PUNTAJES DE ESTE DISPOSITIVO';
@@ -1317,9 +1321,10 @@
   photoModal.addEventListener('click', (e) => { if (e.target === photoModal) closePhoto(); });
 
   // ---------------- PREMIACIÓN ----------------
-  // 21 de noviembre de 2026, 4:00 pm hora Colombia (UTC-5) = 21:00 UTC. Dura 5 horas.
-  const AWARDS_START = Date.UTC(2026, 10, 21, 21, 0, 0);
-  const AWARDS_END = AWARDS_START + 5 * 3600 * 1000;
+  // 21 de noviembre de 2026, de 5:00 pm a 11:59 pm hora Colombia (UTC-5)
+  // = del 21 nov 22:00 UTC al 22 nov 04:59 UTC. Mientras tanto el ranking está oculto.
+  const AWARDS_START = Date.UTC(2026, 10, 21, 22, 0, 0);
+  const AWARDS_END = Date.UTC(2026, 10, 22, 4, 59, 0);
   const awardsActive = () => { const t = Date.now(); return t >= AWARDS_START && t < AWARDS_END; };
 
   const AH = 166, GND = 158;                         // canvas del podio: 240 x 166
@@ -1469,7 +1474,7 @@
     AW.confetti = [];
     winnersBtn.textContent = 'VER GANADORES';
     winnersBtn.hidden = AW.top.length === 0;
-    $('#btn-awards-ranking').hidden = false;
+    $('#btn-awards-ranking').hidden = true;          // ranking oculto durante la premiación
     renderPodLabels();
     showScreen('awards');
   }
@@ -1674,6 +1679,9 @@
       const active = awardsActive();
       if (active && state.screen === 'intro') showAwards();
       else if (!active && state.screen === 'awards') introStart(false);
+      // Ranking oculto durante la premiación (también para quien termina su partida en ese rato)
+      $('#btn-end-ranking').hidden = active;
+      if (active && !rankModal.hidden) closeRanking();
     }
     requestAnimationFrame(frame);
   }
