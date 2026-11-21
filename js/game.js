@@ -482,7 +482,7 @@
   }
 
   function startGame() {
-    // Durante la premiación (21 nov, 5:00–11:59 pm) no se puede jugar
+    // Durante la premiación (21 nov 6:00 pm – 22 nov 6:00 pm) no se puede jugar
     if (awardsActive()) { showAwards(); return; }
     resetGame();
     showScreen('game');
@@ -1321,10 +1321,10 @@
   photoModal.addEventListener('click', (e) => { if (e.target === photoModal) closePhoto(); });
 
   // ---------------- PREMIACIÓN ----------------
-  // 21 de noviembre de 2026, de 5:00 pm a 11:59 pm hora Colombia (UTC-5)
-  // = del 21 nov 22:00 UTC al 22 nov 04:59 UTC. Mientras tanto el ranking está oculto.
-  const AWARDS_START = Date.UTC(2026, 10, 21, 22, 0, 0);
-  const AWARDS_END = Date.UTC(2026, 10, 22, 4, 59, 0);
+  // Del 21 de noviembre de 2026, 6:00 pm, al 22 de noviembre, 6:00 pm, hora Colombia (UTC-5)
+  // = del 21 nov 23:00 UTC al 22 nov 23:00 UTC (24 horas). Mientras tanto el ranking está oculto.
+  const AWARDS_START = Date.UTC(2026, 10, 21, 23, 0, 0);
+  const AWARDS_END = Date.UTC(2026, 10, 22, 23, 0, 0);
   const awardsActive = () => { const t = Date.now(); return t >= AWARDS_START && t < AWARDS_END; };
 
   const AH = 166, GND = 158;                         // canvas del podio: 240 x 166

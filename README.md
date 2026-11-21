@@ -6,7 +6,7 @@ Juego web en **pixel art** para el cumpleaños número 9 de Nico.
 
 El jugador tiene **90 segundos** para meterle la mayor cantidad de goles a Nico, el arquero del número 9, y su puntaje entra a un **ranking global** compartido por todos los invitados.
 
-El **21 de noviembre de 2026, de 5:00 pm a 11:59 pm (hora Colombia)**, el juego se cierra y la página muestra la **premiación**: un podio animado con los 3 mejores. Durante ese tiempo el ranking está oculto.
+Del **21 de noviembre de 2026 a las 6:00 pm al 22 de noviembre a las 6:00 pm (hora Colombia)**, el juego se cierra y la página muestra la **premiación**: un podio animado con los 3 mejores. Durante ese tiempo el ranking está oculto.
 
 > Historial completo del desarrollo: [`docs/HISTORIAL.md`](docs/HISTORIAL.md)
 
@@ -51,7 +51,7 @@ La página es **responsive** (móvil vertical y horizontal, tablet y desktop) y 
 | **Final** | Resultado, Nico emocionado diciendo una frase según el desempeño, estadísticas (puntos, goles, tiros, puntería), botón **VER RANKING** de lado a lado y botones JUGAR OTRA VEZ, CAMBIAR JUGADOR y ♪. Si es récord, Nico salta y dice *"¡SIIIUUUUUU! ¡Rompiste el récord!"*. |
 | **Popup "Ver ranking"** | Desde el inicio o la pantalla final (nunca mientras se juega ni durante la premiación): lista completa de puntajes con scroll propio; cada fila muestra posición, nombre, goles y, al final, los puntos. Desde la pantalla final resalta en amarillo la partida recién jugada. Tiene su propia nota musical ♪. |
 | **Foto con el tío Pipe** | Al tocar "Creado por: Mi tío Pipe": marco de foto pixel animado (7 s en loop) con Nico y su tío: se dan la mano, saltan, celebran *"SIIUUUU"* estilo CR7, se ríen y posan abrazados. |
-| **Premiación** | Solo el 21 de noviembre de 2026, de 5:00 pm a 11:59 pm (ver abajo). |
+| **Premiación** | Del 21 de noviembre de 2026, 6:00 pm, al 22 de noviembre, 6:00 pm (24 horas, ver abajo). |
 
 ---
 
@@ -126,7 +126,7 @@ Hay dos sonidos independientes, cada uno con su botón, así que se puede tener 
 
 ## Premiación del 21 de noviembre
 
-Del **21 de noviembre de 2026, 5:00 pm** al **11:59 pm** (hora Colombia, UTC−5) no se puede jugar y **el ranking está oculto** (no aparece el botón VER RANKING en ninguna pantalla). Quien entre a la página ve:
+Del **21 de noviembre de 2026, 6:00 pm** al **22 de noviembre, 6:00 pm** (hora Colombia, UTC−5; 24 horas) no se puede jugar y **el ranking está oculto** (no aparece el botón VER RANKING en ninguna pantalla). Quien entre a la página ve:
 
 1. **Podio vacío** (1º al centro, 2º izquierda, 3º derecha), solo con los puestos: los nombres son sorpresa.
 2. Botón **VER GANADORES** (con la nota musical ♪ a su derecha): suena `winner-song.mp3` y los ganadores suben **uno por uno, primero el 3º, luego el 2º y por último el 1º**. Cada uno entra caminando desde fuera de la pantalla por la derecha y salta a su puesto; su nombre y puntaje aparecen cuando llega.
@@ -139,7 +139,7 @@ Del **21 de noviembre de 2026, 5:00 pm** al **11:59 pm** (hora Colombia, UTC−5
    - Nico está **2º o 3º:** baja de su puesto, entrega el trofeo, celebran y vuelve a su lugar.
    - Nico es el **1º:** entra el **tío Pipe** (el mismo de la foto "Creado por: Mi tío Pipe") con el trofeo, se lo entrega a Nico y celebran juntos.
 5. **VER DE NUEVO** repite toda la animación (y la canción).
-En el podio cada nombre aparece una sola vez con su mejor puntaje (los nombres se comparan tal cual: "ANDRES" y "ANDREZ" son personas distintas). Si alguien está jugando a las 5:00 pm, termina su partida y su puntaje cuenta (pero no ve el ranking). A las 11:59 pm la página vuelve sola al juego y el ranking se puede ver otra vez.
+En el podio cada nombre aparece una sola vez con su mejor puntaje (los nombres se comparan tal cual: "ANDRES" y "ANDREZ" son personas distintas). Si alguien está jugando a las 6:00 pm, termina su partida y su puntaje cuenta (pero no ve el ranking). El 22 de noviembre a las 6:00 pm la página vuelve sola al juego y el ranking se puede ver otra vez.
 
 ---
 
@@ -202,7 +202,7 @@ python3 -m http.server 8000
 
 ### Demo de la premiación (no se publica)
 
-`demo-podio.html` simula el 21 de noviembre a las 5:00 pm con 64 resultados aleatorios para ver el podio antes de tiempo. **No está en el repositorio** (está en `.gitignore`) para que nadie vea un podio inventado; solo existe en el computador de desarrollo. Opcional: `demo-podio.html?nico=1` (o `2`, `3`) pone a "NICO PRO" en ese puesto.
+`demo-podio.html` simula el 21 de noviembre a las 6:00 pm con 64 resultados aleatorios para ver el podio antes de tiempo. **No está en el repositorio** (está en `.gitignore`) para que nadie vea un podio inventado; solo existe en el computador de desarrollo. Opcional: `demo-podio.html?nico=1` (o `2`, `3`) pone a "NICO PRO" en ese puesto.
 
 ---
 
@@ -232,7 +232,7 @@ Los valores principales están al inicio de [`js/game.js`](js/game.js):
 | `TWO_KEEPERS_MULT` | `2` | Multiplicador de puntos con dos Nicos en la cancha |
 | `HATTRICK_BONUS` / `YELLOW_PENALTY` / `RED_PENALTY` | `3` / `2` / `3` | Bonos y castigos |
 | `BALL_PX` | `27` | Tamaño del balón en el punto penal (al llegar al arco se ve al 60 %) |
-| `AWARDS_START` / `AWARDS_END` | 21 nov 2026, 22:00 UTC / 22 nov 2026, 04:59 UTC | Premiación: de 5:00 pm a 11:59 pm hora Colombia |
+| `AWARDS_START` / `AWARDS_END` | 21 nov 2026, 23:00 UTC / 22 nov 2026, 23:00 UTC | Premiación: del 21 nov 6:00 pm al 22 nov 6:00 pm hora Colombia (24 h) |
 
 La música se ajusta al inicio de [`js/music.js`](js/music.js):
 
