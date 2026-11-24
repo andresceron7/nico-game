@@ -19,6 +19,7 @@ Del **21 de noviembre de 2026 a las 6:00 pm al 22 de noviembre a las 6:00 pm (ho
 - [Reglas del juego](#reglas-del-juego)
 - [Música y sonido](#música-y-sonido)
 - [Premiación del 21 de noviembre](#premiación-del-21-de-noviembre)
+- [Resultados y campeón del 1er torneo](#resultados-y-campeón-del-1er-torneo)
 - [Ranking global con Firebase](#ranking-global-con-firebase)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Ejecutar en local](#ejecutar-en-local)
@@ -143,6 +144,28 @@ En el podio cada nombre aparece una sola vez con su mejor puntaje (los nombres s
 
 ---
 
+## Resultados y campeón del 1er torneo
+
+### Resultados guardados
+
+El ranking del 1er torneo quedó **congelado** antes de vaciar Firebase:
+
+- [`ranking_final_cumple-nico.md`](ranking_final_cumple-nico.md): captura legible (podio + las 184 partidas hasta el cierre del 21 nov a las 6:00 pm, incluidas las 4 que terminaron segundos después y contaron en la premiación).
+- [`js/torneo1.js`](js/torneo1.js): los mismos datos para el juego.
+- Botón **RESULTADOS 1ER TORNEO - 21 NOVIEMBRE 2026**, debajo de VER RANKING en el inicio y en la pantalla final. Abre un popup con el **podio estático** (el 1º levanta la copa, confeti quieto) y debajo la lista completa, con los 3 del podio resaltados en amarillo. No depende de Firebase.
+
+### Campeón como personaje invitado (temporal)
+
+El 1º del podio (**CUCHAXSON**, nombre tomado de `js/torneo1.js`) aparece en el juego:
+
+- **Intro:** está parado al lado de Nico todo el tiempo. Después del saludo de Nico dice *"HOLA, SOY CUCHAXSON Y GANÉ EL PRIMER TORNEO."* (el cuadro de diálogo muestra su nombre).
+- **Partido:** **reemplaza al segundo Nico** con las mismas reglas (aparece a las 0:20 con 70 puntos o más, ataja igual, x2, ritmo propio, se va saltando al final). Al entrar sale el aviso *"¡LLEGÓ CUCHAXSON! EL CAMPEÓN DEL 1ER TORNEO"*, y los mensajes dicen *"¡ATAJÓ CUCHAXSON!"* o *"¡PEGADITO A CUCHAXSON!"* cuando es él.
+- **Personaje:** pixel art basado en su foto (piel trigueña clara, pelo castaño oscuro con flequillo de lado, sonrisa grande), uniforme de jugador de campo rojo con medalla dorada de campeón. Se dibuja en `Sprites.champ` (`js/sprites.js`).
+
+**Para retirarlo:** en [`js/campeon.js`](js/campeon.js) cambia `activo: true` por `activo: false`. Vuelven el intro original y los dos Nicos.
+
+---
+
 ## Ranking global con Firebase
 
 Los puntajes se guardan en **Cloud Firestore** (proyecto `nico-game`), sin autenticación.
@@ -180,8 +203,11 @@ js/audio.js             Efectos 8-bit generados con Web Audio (sin archivos)
 js/music.js             Música de fondo: qué canción suena, volumen, loop y botón ♪
 songs/                  Canciones en MP3 (intro, partido, ranking y premiación)
 js/ranking.js           Ranking global en Firestore + cola sin conexión
+js/torneo1.js           Ranking congelado del 1er torneo (botón RESULTADOS 1ER TORNEO)
+js/campeon.js           Interruptor del campeón del 1er torneo como personaje (activo true/false)
 js/game.js              Lógica: pantallas, juego, eventos, final, premiación, foto, popups
 firestore.rules         Reglas de seguridad de Firestore
+ranking_final_cumple-nico.md  Captura del ranking final del 1er torneo
 docs/HISTORIAL.md       Historial del desarrollo
 ```
 

@@ -204,8 +204,11 @@ body::after {
 .credit .credit-music svg { width: 14px; height: 14px; }
 .credit .credit-music.off { color: #777; }
 .credit .rank-open:focus-visible { outline: 3px dashed var(--yellow); outline-offset: 6px; }
-/* En el inicio hay más espacio abajo para el botón VER RANKING */
-#screen-intro { padding-bottom: max(94px, env(safe-area-inset-bottom)); }
+/* En el inicio hay más espacio abajo para VER RANKING y RESULTADOS 1ER TORNEO */
+#screen-intro { padding-bottom: max(136px, env(safe-area-inset-bottom)); }
+/* "RESULTADOS 1ER TORNEO - 21 NOVIEMBRE 2026": debajo de VER RANKING, mismo estilo */
+.credit .torneo-open { max-width: calc(100vw - 32px); line-height: 1.6; }
+.credit .torneo-open[hidden] { display: none; }
 
 /* Popup del ranking */
 .rank-pop {
@@ -605,6 +608,8 @@ canvas {
 .msg.cd .main { font-size: 22cqw; }
 .msg.vs .main { font-size: 8cqw; }
 .msg.end .main { font-size: 8cqw; }
+/* Campeón del 1er torneo: su nombre es largo */
+.msg.champ .main { font-size: 7cqw; }
 
 /* ---------- Final ---------- */
 #screen-end { overflow-y: auto; }
@@ -865,3 +870,19 @@ canvas {
   .end-top { grid-template-columns: 1fr 1.3fr; align-items: center; }
   .end-top .stage { height: 150px; }
 }
+
+/* ---------- Resultados del 1er torneo (popup) ---------- */
+/* El popup completo hace scroll: primero se ve el podio y debajo todos los resultados */
+.ranking.rank-pop-box.torneo-box { overflow-y: auto; overscroll-behavior: contain; }
+.torneo-box h3 small { display: block; margin-top: 8px; font-size: 8px; color: #fff; }
+.torneo-box ol { flex: none; overflow: visible; padding-right: 0; }
+.canvas-box.t1-pod {
+  flex: none;
+  width: calc(100% - 24px);
+  max-width: 440px;
+  height: auto;
+  aspect-ratio: 240 / 166;
+  margin: 12px auto 26px;
+  container-type: inline-size;
+}
+.btn.btn-torneo { font-size: clamp(9px, 2.6vw, 13px); line-height: 1.6; }

@@ -144,6 +144,7 @@
       </div>
 
       <button type="button" class="btn btn-rank" id="btn-end-ranking">VER RANKING</button>
+      <button type="button" class="btn btn-rank btn-torneo" id="btn-end-torneo1">RESULTADOS 1ER TORNEO - 21 NOVIEMBRE 2026</button>
 
       <div class="end-actions">
         <button type="button" class="btn btn-play" id="btn-again">JUGAR OTRA VEZ</button>
@@ -195,6 +196,7 @@
       </svg>
       </button>
     </div>
+    <button type="button" class="rank-open torneo-open" id="btn-torneo1" hidden>RESULTADOS 1ER TORNEO - 21 NOVIEMBRE 2026</button>
     <button type="button" class="credit-link" id="btn-credit">Creado por: Mi tío Pipe</button>
   </footer>
 
@@ -211,6 +213,28 @@
         <h3>RANKING</h3>
         <ol id="rank-pop-list"></ol>
         <p class="note" id="rank-pop-note"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultados del 1er torneo (copia congelada en js/torneo1.js): podio estático + ranking completo -->
+  <div class="photo-modal" id="torneo-modal" hidden role="dialog" aria-modal="true" aria-label="Resultados del 1er torneo">
+    <div class="rank-pop">
+      <button type="button" class="photo-close" id="torneo-close" aria-label="Cerrar resultados">X</button>
+      <button type="button" class="mute pop-music music-btn" aria-label="Apagar música">
+        <svg viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
+        <g fill="currentColor"><rect x="3" y="7" width="2" height="1"/><rect x="2" y="8" width="4" height="2"/><rect x="3" y="10" width="2" height="1"/><rect x="5" y="1" width="1" height="8"/><rect x="6" y="1" width="3" height="1"/><rect x="8" y="2" width="2" height="1"/><rect x="9" y="3" width="1" height="2"/></g>
+        <g class="slash" fill="currentColor"><rect x="1" y="1" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="8" y="8" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/></g>
+      </svg>
+      </button>
+      <div class="ranking rank-pop-box torneo-box" id="torneo-box">
+        <h3>1ER TORNEO<small>21 NOVIEMBRE 2026</small></h3>
+        <div class="canvas-box t1-pod">
+          <canvas id="cv-torneo" aria-label="Podio del 1er torneo con los 3 ganadores"></canvas>
+          <div id="t1-labels"></div>
+        </div>
+        <ol id="torneo-list"></ol>
+        <p class="note" id="torneo-note"></p>
       </div>
     </div>
   </div>
@@ -235,6 +259,8 @@
   <script src="js/audio.js"></script>
   <script src="js/music.js"></script>
   <script src="js/ranking.js"></script>
+  <script src="js/torneo1.js"></script>
+  <script src="js/campeon.js"></script>   <!-- campeón del 1er torneo: activo true/false -->
   <script src="js/game.js"></script>
 </body>
 </html>

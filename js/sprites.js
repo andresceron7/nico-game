@@ -294,6 +294,12 @@ const Sprites = (() => {
       r(4, 19, 4, 4, k.shirt); r(24, 19, 4, 4, k.shirt);
       r(5, 23, 4, 3, o.skin); r(23, 23, 4, 3, o.skin);
       r(6, 25, 4, 3, o.skin); r(22, 25, 4, 3, o.skin);
+    } else if (pose === 'hold') {
+      // Atajada: abraza el balón contra el pecho
+      r(4, 19, 4, 4, k.shirt); r(24, 19, 4, 4, k.shirt);
+      r(5, 23, 4, 3, o.skin); r(23, 23, 4, 3, o.skin);
+      drawMap(g, BALL, 12, 24, BALL_PAL);
+      r(8, 25, 4, 5, o.skin); r(20, 25, 4, 5, o.skin);
     } else if (pose === 'siu') {
       r(4, 19, 4, 4, k.shirt); r(24, 19, 4, 4, k.shirt);
       r(2, 23, 4, 4, o.skin); r(26, 23, 4, 4, o.skin);
@@ -332,6 +338,11 @@ const Sprites = (() => {
     if (eyes === 'happy') {
       r(11, 9, 1, 1, C.eye); r(12, 8, 1, 1, C.eye); r(13, 9, 1, 1, C.eye);
       r(18, 9, 1, 1, C.eye); r(19, 8, 1, 1, C.eye); r(20, 9, 1, 1, C.eye);
+    } else if (eyes === 'closed') {
+      r(11, 10, 3, 1, C.eye); r(18, 10, 3, 1, C.eye);
+    } else if (eyes === 'down') {
+      r(11, 9, 3, 2, C.eyeW); r(18, 9, 3, 2, C.eyeW);
+      r(12, 10, 2, 1, C.eye); r(18, 10, 2, 1, C.eye);
     } else {
       r(11, 8, 3, 3, C.eyeW); r(18, 8, 3, 3, C.eyeW);
       r(12, 8, 2, 3, C.eye); r(18, 8, 2, 3, C.eye);
@@ -342,10 +353,50 @@ const Sprites = (() => {
     r(10, 12, 2, 1, C.blush); r(20, 12, 2, 1, C.blush);
     if (mouth === 'open') {
       r(14, 12, 4, 3, C.mouthIn); r(15, 14, 2, 1, C.tongue);
+    } else if (mouth === 'frown') {
+      r(14, 13, 4, 1, C.mouth); r(13, 14, 1, 1, C.mouth); r(18, 14, 1, 1, C.mouth);
+    } else if (mouth === 'smile') {
+      r(13, 12, 1, 1, C.mouth); r(18, 12, 1, 1, C.mouth); r(14, 13, 4, 1, C.mouth);
     } else {
       r(12, 11, 1, 1, C.mouth); r(19, 11, 1, 1, C.mouth);
       r(13, 12, 6, 2, C.mouthIn); r(13, 12, 6, 1, '#ffffff');
     }
+  }
+
+  /* ---------- Campeón del 1er torneo (ver js/campeon.js) ----------
+     Basado en su foto: piel trigueña clara, pelo castaño oscuro abundante con
+     flequillo hacia un lado, ojos cafés y sonrisa grande. Uniforme de jugador
+     de campo rojo (camiseta roja, pantaloneta blanca, medias rojas) con una
+     medalla dorada de campeón en el pecho. */
+  const CHAMP_LOOK = {
+    id: 'champ', gender: 'boy', skin: '#e4ad84', hair: '#2b1b10',
+    kit: { shirt: '#e63946', trim: '#ffffff', shorts: '#ffffff', socks: '#e63946' },
+  };
+  function drawChampRaw(g, pose, mouth, eyes) {
+    drawKidRaw(g, CHAMP_LOOK, pose, mouth, eyes);
+    const r = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+    const H = CHAMP_LOOK.hair, HL = shade(H, 1.6);
+    // Pelo más abundante, con flequillo largo barrido hacia un lado
+    r(8, 0, 16, 2, H); r(7, 2, 18, 3, H);
+    r(8, 5, 15, 1, H); r(8, 6, 8, 1, H); r(8, 5, 1, 5, H); r(23, 5, 1, 4, H);
+    r(19, 6, 3, 1, H);
+    r(11, 1, 7, 1, HL); r(9, 3, 5, 1, HL); r(18, 2, 3, 1, HL);
+    // Cejas un poco más marcadas
+    r(11, 7, 3, 1, H); r(18, 7, 3, 1, H);
+    // Medalla de campeón (cinta azul y roja + medalla dorada)
+    if (pose !== 'hold') {
+      r(18, 21, 1, 2, '#2f6fd1'); r(20, 21, 1, 2, '#2f6fd1');
+      r(18, 23, 3, 3, '#ffcf3a'); r(19, 24, 1, 1, '#b8902a');
+    }
+  }
+  function champ(pose = 'idle', mouth = 'grin', eyes = 'open') {
+    const key = 'champ|' + pose + '|' + mouth + '|' + eyes;
+    if (!cache[key]) {
+      const c = mk(32, 48);
+      drawChampRaw(c.getContext('2d'), pose, mouth, eyes);
+      cache[key] = outline(c, C.outline);
+    }
+    return cache[key];
   }
 
   function kid(o, pose = 'idle', mouth = 'grin', eyes = 'open') {
@@ -655,5 +706,5 @@ const Sprites = (() => {
     return c.toDataURL();
   }
 
-  return { nico, uncle, kid, trophy, referee, ball, text, textWidth, pattern, C };
+  return { nico, uncle, kid, champ, trophy, referee, ball, text, textWidth, pattern, C };
 })();

@@ -59,7 +59,14 @@
     'AL FINAL CUENTAN TUS GOLES Y LOS PUNTOS QUE SUMES EN EL PARTIDO. ¡MIRA LAS REGLAS AQUÍ ARRIBA!',
     '¿ESTÁS LISTO? ESCRIBE TU NOMBRE Y... ¡A JUGAR!',
   ];
+  // Campeón del 1er torneo (js/campeon.js): con activo = false todo queda como antes
+  const CHAMP = window.CAMPEON && window.CAMPEON.activo ? window.CAMPEON : null;
+  const CHAMP_LINE = CHAMP ? 1 : -1;               // su frase va después del saludo de Nico
+  if (CHAMP) INTRO_LINES.splice(CHAMP_LINE, 0, 'HOLA, SOY ' + CHAMP.nombre + ' Y GANÉ EL PRIMER TORNEO.');
   const LAST_LINE = INTRO_LINES.length - 1;
+  // Sprite del segundo arquero: el campeón (si está activo) o el segundo Nico
+  const keeper2Sprite = (pose, mouth, eyes) => (CHAMP ? S.champ(pose, mouth, eyes) : S.nico(pose, mouth, eyes));
+  const keeperName = (q) => (CHAMP && q === G.keeper2 ? CHAMP.nombre : 'NICO');
 
   // ---------------- Utilidades ----------------
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -271,6 +278,17 @@
     g.fillRect(x - sw / 2, 123, sw, 3);
     g.drawImage(spr, 0, 0, 34, 50, x - 34, 24 + bob - air, 68, 100);
 
+    if (look.champ) {
+      // Campeón del 1er torneo, parado al lado de Nico (respira a otro ritmo)
+      const cx = look.champX;
+      const cBob = Math.floor((t + 260) / 560) % 2;
+      const cBlink = (t % 3900) < 140;
+      const cm = look.champTalking ? (Math.floor(t / 110) % 2 ? 'open' : 'grin') : 'grin';
+      g.fillStyle = 'rgba(0,0,0,.35)';
+      g.fillRect(cx - 28, 123, 56, 3);
+      g.drawImage(S.champ('idle', cm, cBlink ? 'closed' : 'open'), 0, 0, 34, 50, cx - 34, 24 + cBob, 68, 100);
+    }
+
     if (juggle) {
       // Balón pasando de una mano a la otra (coordenadas del sprite → escena x2)
       const P = 560;
@@ -293,7 +311,9 @@
     stages.forEach(fit);
     // "VER RANKING" (y su nota musical) solo existe en el inicio (nunca mientras se juega)
     document.getElementById('credit-row').hidden = name !== 'intro';
+    document.getElementById('btn-torneo1').hidden = name !== 'intro';   // RESULTADOS 1ER TORNEO, debajo
     document.getElementById('rank-modal').hidden = true;
+    document.getElementById('torneo-modal').hidden = true;
     // Música de fondo: cada pantalla arranca su canción desde el inicio
     if (name === 'intro') Music.play('game', 'intro', true);
     else if (name === 'game') Music.play('match', 'match', true);     // moderada: priman los efectos
@@ -352,29 +372,30 @@
     formEl.hidden = true;
     skipEl.hidden = false;
   }
+  // Cada línea del intro: la dice Nico, salvo la del campeón
+  const dialogNameEl = dialogEl.querySelector('.dialog-name');
+  function introLine(i, text = INTRO_LINES[i]) {
+    intro.i = i;
+    dialogNameEl.textContent = i === CHAMP_LINE ? CHAMP.nombre : 'NICO';
+    intro.typer.start(text);
+  }
   function introStart(again) {
     if (again) {
-      intro.i = LAST_LINE;
-      intro.typer.start('¿QUIÉN PATEA AHORA? ESCRIBE TU NOMBRE Y... ¡A JUGAR!');
+      introLine(LAST_LINE, '¿QUIÉN PATEA AHORA? ESCRIBE TU NOMBRE Y... ¡A JUGAR!');
       inputEl.value = '';
       showForm();
     } else {
-      intro.i = 0;
       hideForm();
-      intro.typer.start(INTRO_LINES[0]);
+      introLine(0);
     }
     showScreen('intro');
   }
   function introAdvance() {
     if (!intro.typer.done) { intro.typer.finish(); return; }
-    if (intro.i < LAST_LINE) {
-      intro.i++;
-      intro.typer.start(INTRO_LINES[intro.i]);
-    }
+    if (intro.i < LAST_LINE) introLine(intro.i + 1);
   }
   function introSkip() {
-    intro.i = LAST_LINE;
-    intro.typer.start(INTRO_LINES[LAST_LINE]);
+    introLine(LAST_LINE);
     intro.typer.finish();
     showForm();
   }
@@ -516,6 +537,7 @@
       pose: 'idle', mouth: 'smile',
     };
     G.keeper2.nextStep = now + nextInterval(G.keeper2);
+    if (CHAMP) flash('¡LLEGÓ ' + CHAMP.nombre + '!', 'EL CAMPEÓN DEL 1ER TORNEO', 'champ', 1600);
   }
   // Al terminar el partido (por tiempo o por roja) el segundo Nico se va: queda uno solo
   function dismissKeeper2() {
@@ -601,11 +623,13 @@
       } else {
         sub = '¡OJO! OTRA ATAJADA Y HAY TARJETA';
       }
-      flash('¡ATAJÓ NICO!', sub, 'save', RESULT_MS);
+      flash('¡ATAJÓ ' + keeperName(saver) + '!', sub, saver === G.keeper2 && CHAMP ? 'save champ' : 'save', RESULT_MS);
     } else {
       G.result = 'goal';
       // Puntos por cercanía al Nico más cercano
-      const dist = Math.min(...ks.map((q) => Math.abs(G.ball.target - q.sector)));
+      const dists = ks.map((q) => Math.abs(G.ball.target - q.sector));
+      const dist = Math.min(...dists);
+      const nearest = ks[dists.indexOf(dist)];
       const mult = G.keeper2 ? TWO_KEEPERS_MULT : 1;   // x2 solo si el segundo Nico ya está en la cancha
       const pts = pointsFor(dist) * mult;
       G.lastPts = pts;
@@ -617,7 +641,7 @@
       G.cheerUntil = now + 1500;
       G.shakeUntil = now + 300;
       Sfx.goal();
-      const label = (mult > 1 ? ' · x' + mult : '') + (dist === 1 ? ' · ¡PEGADITO A NICO!' : '');
+      const label = (mult > 1 ? ' · x' + mult : '') + (dist === 1 ? ' · ¡PEGADITO A ' + keeperName(nearest) + '!' : '');
       flash('¡GOOOL!', '+' + pts + (pts === 1 ? ' PUNTO' : ' PUNTOS') + label, 'goal', RESULT_MS);
       bump(hud.goals);
       if (G.goalStreak >= 3) {
@@ -873,8 +897,8 @@
         : Math.round(Math.max(0, 1 - (now - k2.spawnAt) / 260) * 40);          // entra cayendo
       const red = G.phase === 'red' && now - G.phaseAt >= REF_IN;
       const hop2 = red ? Math.round(Math.abs(Math.sin(now / 170)) * 4) : kv2.hop;
-      const spr2 = red ? S.nico('up', 'grin', 'happy')
-        : S.nico(k2.pose, k2.mouth, (now % 3300) < 120 ? 'closed' : (G.result === 'goal' ? 'down' : 'open'));
+      const spr2 = red ? keeper2Sprite('up', 'grin', 'happy')
+        : keeper2Sprite(k2.pose, k2.mouth, (now % 3300) < 120 ? 'closed' : (G.result === 'goal' ? 'down' : 'open'));
       drawShadow(g, kv2.x, GOAL.line - 1, 26);
       g.drawImage(spr2, Math.round(kv2.x) - 17, GOAL.line - 49 - hop2 - drop);
     }
@@ -1140,6 +1164,10 @@
       if (e.key === 'Escape') { e.preventDefault(); closeRanking(); }
       return;
     }
+    if (!torneoModal.hidden) {
+      if (e.key === 'Escape') { e.preventDefault(); closeTorneo(); }
+      return;
+    }
     if (e.target === inputEl) return;
     if (state.screen === 'game' && G.canContinue && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault(); onContinue(); return;
@@ -1359,8 +1387,8 @@
     return out;
   }
 
-  function buildAwardsChars() {
-    return AW.top.map((e, i) => {
+  function buildAwardsChars(top = AW.top) {
+    return top.map((e, i) => {
       const h = Names.hash(e.name);
       return {
         entry: e, place: i + 1, isNico: Names.isNico(e.name),
@@ -1650,6 +1678,89 @@
     }
   }
 
+  // ---------------- RESULTADOS 1ER TORNEO (21 nov 2026) ----------------
+  // Copia congelada del ranking al cierre del torneo (js/torneo1.js), para que siga visible aunque
+  // se borre Firebase. Popup: podio estático (el 1º levanta el trofeo) y debajo la lista completa.
+  const torneoModal = $('#torneo-modal');
+  const torneoList = $('#torneo-list');
+  const T1 = Array.isArray(window.TORNEO1) ? window.TORNEO1 : [];
+  const T1_TOP = uniqueTop(T1);
+  const cvTorneo = setupCanvas('#cv-torneo', GW, AH);
+  let torneoDrawn = false, torneoOpener = null;
+
+  function renderTorneoPodium() {
+    const g = cvTorneo.g;
+    drawStands(g, GW, 44, crowdAwards, 0, false);
+    drawBoards(g, GW, 44, 7, 0);
+    drawGrass(g, GW, 52, AH);
+    g.fillStyle = 'rgba(0,0,0,.25)';
+    g.fillRect(6, GND, GW - 12, 3);
+    BLOCKS.forEach((b) => drawBlock(g, b));
+
+    // Confeti quieto (siempre en el mismo lugar)
+    const rnd = seeded(1121);
+    const cols = ['#ffd23f', '#e63946', '#2f6fd1', '#2f9e44', '#ffffff', '#ff8fab'];
+    for (let i = 0; i < 70; i++) {
+      g.fillStyle = cols[Math.floor(rnd() * cols.length)];
+      g.fillRect(Math.round(rnd() * (GW - 2)), Math.round(rnd() * (GND - 4)), 2, 2);
+    }
+
+    // Personajes quietos: 2º y 3º sonriendo, el 1º con los brazos arriba sosteniendo la copa
+    buildAwardsChars(T1_TOP).forEach((c, i) => {
+      const b = BLOCKS[i];
+      const cx = b.x + b.w / 2;
+      const first = i === 0;
+      g.fillStyle = 'rgba(0,0,0,.3)';
+      g.fillRect(Math.round(cx) - 11, b.top - 1, 22, 2);
+      g.drawImage(charSprite(c, first ? 'up' : 'idle', first ? 'open' : 'grin', 'happy'), Math.round(cx) - 17, b.top - 50);
+      if (first) drawTrophy(g, cx, b.top - 44);
+    });
+
+    // Nombres y puntos sobre cada bloque (mismo estilo que la premiación)
+    const box = $('#t1-labels');
+    box.replaceChildren();
+    BLOCKS.forEach((b, i) => {
+      const e = T1_TOP[i];
+      const el = document.createElement('div');
+      el.className = 'pod-label';
+      el.style.left = (b.x / GW * 100) + '%';
+      el.style.width = (b.w / GW * 100) + '%';
+      el.style.top = ((b.top + 6) / AH * 100) + '%';
+      const mk = (cls, txt) => { const s = document.createElement('span'); s.className = cls; s.textContent = txt; return s; };
+      const row = document.createElement('span');
+      row.className = 'nmrow';
+      row.append(mk('nm', e ? e.name : '—'));
+      if (e && !e.card) row.append(medal());
+      el.append(mk('pl', (i + 1) + 'º'), row, mk('pt', e ? e.points + ' PTS' : ''));
+      box.appendChild(el);
+    });
+  }
+
+  function openTorneo(e) {
+    if (!['intro', 'end'].includes(state.screen)) return;
+    torneoOpener = (e && e.currentTarget) || $('#btn-torneo1');
+    Sfx.unlock();
+    if (!torneoDrawn) {
+      renderTorneoPodium();
+      // Filas del podio resaltadas en amarillo
+      const podium = new Set(T1_TOP);
+      renderRankList(torneoList, T1, (r) => podium.has(r));
+      $('#torneo-note').textContent = T1.length + ' PARTIDAS · CIERRE: 21 NOV 2026, 6:00 PM';
+      torneoDrawn = true;
+    }
+    torneoModal.hidden = false;
+    $('#torneo-box').scrollTop = 0;                    // lo primero que se ve es el podio
+    $('#torneo-close').focus();
+  }
+  function closeTorneo() {
+    torneoModal.hidden = true;
+    if (torneoOpener) torneoOpener.focus();
+  }
+  $('#btn-torneo1').addEventListener('click', openTorneo);
+  $('#btn-end-torneo1').addEventListener('click', openTorneo);
+  $('#torneo-close').addEventListener('click', closeTorneo);
+  torneoModal.addEventListener('click', (e) => { if (e.target === torneoModal) closeTorneo(); });
+
   // ---------------- Bucle principal ----------------
   let last = performance.now();
   let lastScheduleCheck = 0;
@@ -1662,7 +1773,9 @@
       intro.typer.update(dt);
       if (intro.i === LAST_LINE && intro.typer.done && !intro.formShown) showForm();
       nextEl.hidden = !(intro.typer.done && !intro.formShown);
-      renderScene(cvIntro, INTRO_LOOK, !intro.typer.done, now);
+      const champTalking = intro.i === CHAMP_LINE && !intro.typer.done;
+      INTRO_LOOK.champTalking = champTalking;
+      renderScene(cvIntro, INTRO_LOOK, !intro.typer.done && !champTalking, now);
     } else if (state.screen === 'game') {
       if (!photo.open) updateGame(dt); // el partido se pausa mientras la foto está abierta
       renderGame();
@@ -1686,7 +1799,9 @@
     requestAnimationFrame(frame);
   }
 
-  const INTRO_LOOK = { pose: 'hold', mouth: 'smile', eyes: 'open' };
+  const INTRO_LOOK = CHAMP
+    ? { pose: 'hold', mouth: 'smile', eyes: 'open', x: 54, champ: true, champX: 110 }   // Nico + el campeón
+    : { pose: 'hold', mouth: 'smile', eyes: 'open' };
 
   // Fondo con patrón de balones, guayos, guantes, pitos y tarjetas
   try {
