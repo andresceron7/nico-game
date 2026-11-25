@@ -162,17 +162,15 @@ body::after {
 .pod-label .pt { font-size: 2cqw; }
 
 /* ---------- Créditos ---------- */
+/* El pie va DENTRO de la pantalla activa (game.js lo mueve al final de su .wrap), debajo del
+   contenido: así nunca queda encima de otros botones. En el partido no se muestra. */
 .credit {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: max(12px, env(safe-area-inset-bottom));
+  flex: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  z-index: 44;
-  pointer-events: none;
+  gap: 16px;
+  padding-top: 4px;
 }
 /* Fila del inicio: VER RANKING y, a su derecha, la nota musical (misma altura, 40px entre los dos) */
 .credit .credit-row {
@@ -204,8 +202,9 @@ body::after {
 .credit .credit-music svg { width: 14px; height: 14px; }
 .credit .credit-music.off { color: #777; }
 .credit .rank-open:focus-visible { outline: 3px dashed var(--yellow); outline-offset: 6px; }
-/* En el inicio hay más espacio abajo para VER RANKING y RESULTADOS 1ER TORNEO */
-#screen-intro { padding-bottom: max(136px, env(safe-area-inset-bottom)); }
+/* Inicio: si no cabe todo (celulares bajitos), la pantalla hace scroll en vez de encimar cosas */
+#screen-intro { overflow-y: auto; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+#screen-intro .wrap { height: auto; min-height: 100%; align-self: flex-start; }
 /* "RESULTADOS 1ER TORNEO - 21 NOVIEMBRE 2026": debajo de VER RANKING, mismo estilo */
 .credit .torneo-open { max-width: calc(100vw - 32px); line-height: 1.6; }
 .credit .torneo-open[hidden] { display: none; }
@@ -379,8 +378,8 @@ canvas {
    así Nico, las reglas y el diálogo suben en vez de quedar con huecos */
 @media (orientation: portrait) {
   .intro-body .stage {
-    flex: 0 1 auto;
-    height: calc((min(100vw, 892px) - 32px - 28px) * 0.8 + 28px);
+    flex: none;
+    height: min(calc((min(100vw, 892px) - 32px - 28px) * 0.8 + 28px), 38vh);
   }
 }
 .intro-side {
@@ -445,6 +444,7 @@ canvas {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  scroll-margin-bottom: 16px;   /* al desplazarse hasta el formulario, que quede aire debajo de JUGAR */
   animation: pop .35s steps(4) both;
 }
 .name-form label {
@@ -546,13 +546,15 @@ canvas {
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
   grid-template-areas: "stage stage" "aim kick";
-  gap: 18px 14px;
+  align-content: start;
+  /* 14px + 2px de aire del escenario = botones a 16px del marco (su margen de 4px lo ocupa su borde) */
+  gap: 14px;
   padding: 0 4px 4px;
 }
-.play .stage { grid-area: stage; }
+.play .stage { grid-area: stage; flex: none; }
 .pad-aim { grid-area: aim; display: flex; gap: 12px; align-items: stretch; }
 .pad-kick { grid-area: kick; display: flex; }
 .btn-arrow {
@@ -565,8 +567,11 @@ canvas {
 .btn-arrow svg { width: 55%; height: auto; }
 .btn-kick {
   flex: 1;
+  min-width: 0;
+  padding-left: 8px;
+  padding-right: 8px;
   background: var(--red);
-  font-size: clamp(16px, 5vw, 26px);
+  font-size: clamp(14px, 5vw, 26px);
 }
 .btn-kick.disabled { filter: grayscale(.7) brightness(.8); }
 
@@ -696,7 +701,12 @@ canvas {
 }
 .ranking .note { margin-top: 14px; font-size: 8px; color: #777; text-align: center; line-height: 1.6; }
 .end-actions { display: flex; gap: 12px; }
-.end-actions .btn { flex: 1 1 0; min-width: 0; }
+/* Debajo de JUGAR OTRA VEZ / CAMBIAR JUGADOR: VER RANKING y RESULTADOS 1ER TORNEO */
+.end-links { display: flex; flex-direction: column; gap: 14px; }
+.end-actions .btn { flex: 1 1 0; min-width: 0; padding-left: 8px; padding-right: 8px; }
+@media (max-width: 480px) {
+  .end-actions .btn { font-size: clamp(10px, 3vw, 13px); }
+}
 .end-actions .end-music { flex: 0 0 auto; margin: 4px; min-height: 52px; }
 
 /* Popup del ranking: nota musical arriba a la izquierda (la X va a la derecha) */
@@ -826,6 +836,12 @@ canvas {
   .stats { grid-template-columns: repeat(2, 1fr); }
   .hud-stats { gap: 8px; }
 }
+/* Celulares muy angostos (320px): marcador compacto para que nada se salga de su recuadro */
+@media (max-width: 359px) {
+  .hud-stats { gap: 6px; }
+  .hud-box { padding: 6px 2px; }
+  .hud-stats .mute { width: 36px; }
+}
 
 /* Tablet/desktop horizontal: intro y final en dos columnas */
 @media (orientation: landscape) and (min-width: 760px) and (min-height: 561px) {
@@ -839,10 +855,9 @@ canvas {
 /* Celular horizontal (poca altura) */
 @media (orientation: landscape) and (max-height: 560px) {
   .screen { padding-top: max(14px, env(safe-area-inset-top)); padding-bottom: max(30px, env(safe-area-inset-bottom)); }
-  .credit { bottom: max(4px, env(safe-area-inset-bottom)); }
-  .credit { flex-direction: row; justify-content: center; gap: 32px; }
+  .credit { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 12px 24px; }
   .credit .credit-link { font-size: 10px; }
-  #screen-intro { padding-bottom: max(40px, env(safe-area-inset-bottom)); }
+  #screen-intro { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
   .wrap { gap: 10px; }
   .title { font-size: 16px; }
   .title small { display: none; }
@@ -859,9 +874,12 @@ canvas {
   .hud-box { padding: 4px; gap: 4px; }
 
   .play {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto auto auto;
     grid-template-rows: 1fr;
     grid-template-areas: "aim stage kick";
+    justify-content: center;
+    align-content: stretch;
+    align-items: center;
   }
   .pad-aim, .pad-kick { align-items: center; }
   .btn-arrow { width: clamp(56px, 16vh, 76px); height: clamp(56px, 16vh, 76px); }

@@ -47,9 +47,9 @@ La página es **responsive** (móvil vertical y horizontal, tablet y desktop) y 
 
 | Pantalla | Qué muestra |
 |---|---|
-| **Inicio** | Título, invitación al cumpleaños, Nico explicando el juego (texto letra por letra), reglas visuales (hat-trick, amarilla, roja), campo de nombre, botón **VER RANKING** con la **nota musical ♪** a su derecha y crédito "Creado por: Mi tío Pipe". |
-| **Juego** | Marcador (tiempo, goles, puntos, botón de **efectos** 🔊 y botón de **música** ♪), estadio pixel art, arco con 5 zonas, Nico moviéndose, flecha de apuntado y botones ◀ ▶ PATEAR. |
-| **Final** | Resultado, Nico emocionado diciendo una frase según el desempeño, estadísticas (puntos, goles, tiros, puntería), botón **VER RANKING** de lado a lado y botones JUGAR OTRA VEZ, CAMBIAR JUGADOR y ♪. Si es récord, Nico salta y dice *"¡SIIIUUUUUU! ¡Rompiste el récord!"*. |
+| **Inicio** | Título, invitación al cumpleaños, Nico explicando el juego (texto letra por letra), reglas visuales (hat-trick, amarilla, roja), campo de nombre y, al final, botón **VER RANKING** con la **nota musical ♪**, botón **RESULTADOS 1ER TORNEO** y crédito "Creado por: Mi tío Pipe". En celulares bajitos la pantalla hace scroll (nada queda encima de nada) y al aparecer el formulario se desplaza sola hasta mostrar JUGAR CON NICO. |
+| **Juego** | Marcador (tiempo, goles, puntos, botón de **efectos** 🔊 y botón de **música** ♪), estadio pixel art, arco con 5 zonas, Nico moviéndose, flecha de apuntado y botones ◀ ▶ PATEAR **a 16 px del marco** (debajo en vertical, a los lados en el celular horizontal). Mientras se juega no se muestra "Creado por". |
+| **Final** | Resultado, Nico emocionado diciendo una frase según el desempeño, estadísticas (puntos, goles, tiros, puntería), debajo los botones JUGAR OTRA VEZ, CAMBIAR JUGADOR y ♪, y debajo de esos **VER RANKING** y **RESULTADOS 1ER TORNEO** de lado a lado. Si es récord, Nico salta y dice *"¡SIIIUUUUUU! ¡Rompiste el récord!"*. |
 | **Popup "Ver ranking"** | Desde el inicio o la pantalla final (nunca mientras se juega ni durante la premiación): lista completa de puntajes con scroll propio; cada fila muestra posición, nombre, goles y, al final, los puntos. Desde la pantalla final resalta en amarillo la partida recién jugada. Tiene su propia nota musical ♪. |
 | **Foto con el tío Pipe** | Al tocar "Creado por: Mi tío Pipe": marco de foto pixel animado (7 s en loop) con Nico y su tío: se dan la mano, saltan, celebran *"SIIUUUU"* estilo CR7, se ríen y posan abrazados. |
 | **Premiación** | Del 21 de noviembre de 2026, 6:00 pm, al 22 de noviembre, 6:00 pm (24 horas, ver abajo). |
@@ -65,8 +65,8 @@ La página es **responsive** (móvil vertical y horizontal, tablet y desktop) y 
 - **Sorpresas:** desde el 3er gol, en cada paso puede cambiar de dirección (7 % por gol, máximo 30 %).
 - **Últimos 20 segundos:** un paso cada **100 ms** (10 zonas por segundo), sin aviso.
 - **Segundo Nico:** si a las **0:20** el jugador tiene **70 puntos o más**, aparece un segundo Nico idéntico, sin aviso (se revisa solo en ese instante; si llega a 70 después, no aparece). **Cada uno se mueve a su manera:** su propio ritmo (±30 % alrededor de un paso cada 100 ms) y sus propios cambios de dirección (al menos 20 % por paso), así que nunca se mueven en espejo. Pueden coincidir en la misma zona. Si cualquiera de los dos está en la zona del balón, es atajada.
-- **Al final del partido** (por tiempo o por roja) el segundo Nico se va saltando y queda uno solo.
-- El balón tarda siempre **650 ms** en llegar. **Nico ataja si está en la zona apuntada en el momento en que llega el balón.**
+- **Al final del partido** (por tiempo o por roja) el segundo Nico desaparece de una vez (sin animación) y queda uno solo.
+- El balón tarda **650 ms** en llegar; en los **últimos 20 segundos** va **50 % más rápido: 433 ms** (un balón que ya iba en el aire a las 0:20 conserva su velocidad). **Nico ataja si está en la zona apuntada en el momento en que llega el balón.**
 
 ### Puntos
 
@@ -85,14 +85,14 @@ La página es **responsive** (móvil vertical y horizontal, tablet y desktop) y 
 
 ### 🤓 Dato curioso: el puntaje máximo posible
 
-Con estas reglas, el máximo teórico en los 90 segundos es **255 puntos** (52 goles sin tarjetas).
+Con estas reglas, el máximo teórico en los 90 segundos es **273 puntos** (54 goles sin tarjetas).
 
-- El reloj corre durante el apuntado, el vuelo del balón (0,65 s) y la pausa de GOL (1,1 s), así que cada tiro gasta **como mínimo 1,75 s**. La pausa del hat-trick detiene el reloj, y un tiro pateado antes de 0:00 cuenta aunque el balón llegue después. En total caben **52 tiros**.
+- El reloj corre durante el apuntado, el vuelo del balón (0,65 s; 0,433 s en los últimos 20 s) y la pausa de GOL (1,1 s), así que cada tiro gasta **como mínimo 1,75 s** (1,533 s en los últimos 20 s). La pausa del hat-trick detiene el reloj, y un tiro pateado antes de 0:00 cuenta aunque el balón llegue después. En total caben **54 tiros** (40 + 14).
 - **Primeros 70 s:** 40 goles × 3 = 120, más 13 hat-tricks × 3 = 39 → **159** (más de 70, así que aparece el segundo Nico).
-- **Últimos 20 s (x2):** 12 goles × 6 = 72, más 4 hat-tricks × 6 = 24 → **96**.
-- **Total: 159 + 96 = 255.**
+- **Últimos 20 s (x2, balón más rápido):** 14 goles × 6 = 84, más 5 hat-tricks × 6 = 30 → **114**.
+- **Total: 159 + 114 = 273.**
 
-Para lograrlo habría que patear sin ningún tiempo de reacción, meter todos los goles pegaditos a Nico y no fallar ni uno, incluso cuando Nico da un paso cada 0,1 s. Es prácticamente imposible: con el tiempo de reacción de una persona (unos 0,3 s por tiro) caben unos 44 tiros, y muchos goles valen 1 o 2 puntos.
+Para lograrlo habría que patear sin ningún tiempo de reacción, meter todos los goles pegaditos a Nico y no fallar ni uno, incluso cuando Nico da un paso cada 0,1 s. Es prácticamente imposible: con el tiempo de reacción de una persona (unos 0,3 s por tiro) caben unos 45 tiros, y muchos goles valen 1 o 2 puntos.
 
 ### Eventos
 
@@ -159,7 +159,7 @@ El ranking del 1er torneo quedó **congelado** antes de vaciar Firebase:
 El 1º del podio (**CUCHAXSON**, nombre tomado de `js/torneo1.js`) aparece en el juego:
 
 - **Intro:** está parado al lado de Nico todo el tiempo. Después del saludo de Nico dice *"HOLA, SOY CUCHAXSON Y GANÉ EL PRIMER TORNEO."* (el cuadro de diálogo muestra su nombre).
-- **Partido:** **reemplaza al segundo Nico** con las mismas reglas (aparece a las 0:20 con 70 puntos o más, ataja igual, x2, ritmo propio, se va saltando al final). Al entrar sale el aviso *"¡LLEGÓ CUCHAXSON! EL CAMPEÓN DEL 1ER TORNEO"*, y los mensajes dicen *"¡ATAJÓ CUCHAXSON!"* o *"¡PEGADITO A CUCHAXSON!"* cuando es él.
+- **Partido:** **reemplaza al segundo Nico** con las mismas reglas (aparece a las 0:20 con 70 puntos o más, ataja igual, x2, ritmo propio, desaparece sin animación al final). Al entrar sale el aviso *"¡LLEGÓ CUCHAXSON! EL CAMPEÓN DEL 1ER TORNEO"*, y los mensajes dicen *"¡ATAJÓ CUCHAXSON!"* o *"¡PEGADITO A CUCHAXSON!"* cuando es él.
 - **Personaje:** pixel art basado en su foto (piel trigueña clara, pelo castaño oscuro con flequillo de lado, sonrisa grande), uniforme de jugador de campo rojo con medalla dorada de campeón. Se dibuja en `Sprites.champ` (`js/sprites.js`).
 
 **Para retirarlo:** en [`js/campeon.js`](js/campeon.js) cambia `activo: true` por `activo: false`. Vuelven el intro original y los dos Nicos.
@@ -251,6 +251,7 @@ Los valores principales están al inicio de [`js/game.js`](js/game.js):
 |---|---|---|
 | `GAME_MS` | `90000` | Duración del partido (ms) |
 | `FLIGHT_MS` | `650` | Lo que tarda el balón en llegar |
+| `FRENZY_FLIGHT_MS` | `433` (`FLIGHT_MS / 1.5`) | Lo que tarda el balón en los últimos 20 s (50 % más rápido) |
 | `BASE_STEP` / `SPEEDUP` / `MIN_STEP` | `850` / `0.87` / `170` | Velocidad de Nico según los goles |
 | `FRENZY_MS` / `FRENZY_STEP` | `20000` / `100` | Últimos segundos súper rápidos |
 | `TWO_KEEPERS_MIN_POINTS` | `70` | Puntos a las 0:20 para que aparezca el segundo Nico |

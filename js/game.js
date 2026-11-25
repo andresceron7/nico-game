@@ -17,7 +17,9 @@
   const SPOT = { x: 120, y: 186 };
 
   const GAME_MS = 90000;   // 90 segundos
-  const FLIGHT_MS = 650;   // lo que tarda el balón en llegar al arco (siempre igual)
+  const FLIGHT_MS = 650;   // lo que tarda el balón en llegar al arco
+  // Últimos 20 segundos: el balón va 50 % más rápido (650 / 1,5 = 433 ms)
+  const FRENZY_FLIGHT_MS = Math.round(FLIGHT_MS / 1.5);
   const RESULT_MS = 1100;  // pausa para mostrar GOL / ATAJADA
   const OVER_MS = 2200;
 
@@ -90,22 +92,52 @@
   const cvEnd = setupCanvas('#cv-end', SW, SH);
 
   // Escala el canvas para que quepa en su contenedor manteniendo proporción
+  const FRAME_PAD = 28; // espacio para el marco (12px por lado) + 2px de aire
+  function scaleFor(c, w, h) {
+    let s = Math.min((w - FRAME_PAD) / c.width, (h - FRAME_PAD) / c.height);
+    if (s >= 2) s = Math.floor(s * 2) / 2;
+    return Math.max(0.5, s);
+  }
   function fit(stage) {
+    if (stage.id === 'stage-game') { fitGame(); return; }
     const box = stage.querySelector('.canvas-box');
     const c = box.querySelector('canvas');
     const r = stage.getBoundingClientRect();
     if (!r.width || !r.height) return;
-    const pad = 28; // espacio para el marco
-    let s = Math.min((r.width - pad) / c.width, (r.height - pad) / c.height);
-    if (s >= 2) s = Math.floor(s * 2) / 2;
-    s = Math.max(0.5, s);
+    const s = scaleFor(c, r.width, r.height);
     box.style.width = Math.round(c.width * s) + 'px';
     box.style.height = Math.round(c.height * s) + 'px';
   }
+
+  // Partido: el escenario mide justo lo que el canvas con su marco, y los botones (flechas y PATEAR)
+  // quedan a 16px del marco: debajo en vertical, a los lados en el celular horizontal.
+  // El espacio disponible se mide en .play (que llena la pantalla), no en el escenario.
+  const playEl = document.querySelector('.play');
+  function fitGame() {
+    const stage = document.getElementById('stage-game');
+    const box = stage.querySelector('.canvas-box');
+    const c = box.querySelector('canvas');
+    const cs = getComputedStyle(playEl);
+    let w = playEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    let h = playEl.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    if (w <= 0 || h <= 0) return;
+    const aim = playEl.querySelector('.pad-aim').getBoundingClientRect();
+    const kick = playEl.querySelector('.pad-kick').getBoundingClientRect();
+    const side = cs.gridTemplateAreas.includes('aim stage kick');
+    if (side) w -= aim.width + kick.width + 2 * parseFloat(cs.columnGap);
+    else h -= Math.max(aim.height, kick.height) + parseFloat(cs.rowGap);
+    const s = scaleFor(c, w, h);
+    const bw = Math.round(c.width * s), bh = Math.round(c.height * s);
+    box.style.width = bw + 'px';
+    box.style.height = bh + 'px';
+    stage.style.width = side ? (bw + FRAME_PAD) + 'px' : '';
+    stage.style.height = (bh + FRAME_PAD) + 'px';
+  }
   const stages = document.querySelectorAll('.stage');
   if ('ResizeObserver' in window) {
-    const ro = new ResizeObserver((entries) => entries.forEach((e) => fit(e.target)));
+    const ro = new ResizeObserver((entries) => entries.forEach((e) => (e.target === playEl ? fitGame() : fit(e.target))));
     stages.forEach((s) => ro.observe(s));
+    ro.observe(playEl);
   }
   window.addEventListener('resize', () => stages.forEach(fit));
 
@@ -312,6 +344,12 @@
     // "VER RANKING" (y su nota musical) solo existe en el inicio (nunca mientras se juega)
     document.getElementById('credit-row').hidden = name !== 'intro';
     document.getElementById('btn-torneo1').hidden = name !== 'intro';   // RESULTADOS 1ER TORNEO, debajo
+    // El pie (VER RANKING, RESULTADOS, "Creado por") va al final de la pantalla activa, dentro del
+    // contenido, para que nunca quede encima de otros botones. Mientras se juega no se muestra.
+    const footer = document.querySelector('footer.credit');
+    footer.hidden = name === 'game';
+    const host = document.querySelector('#screen-' + name + ' .wrap');
+    if (host && footer.parentNode !== host) host.appendChild(footer);
     document.getElementById('rank-modal').hidden = true;
     document.getElementById('torneo-modal').hidden = true;
     // Música de fondo: cada pantalla arranca su canción desde el inicio
@@ -365,7 +403,10 @@
     formEl.hidden = false;
     skipEl.hidden = true;
     nextEl.hidden = true;
-    if (FINE_POINTER) setTimeout(() => inputEl.focus(), 50);
+    // En celulares bajitos el inicio hace scroll: que se vea el formulario completo (nombre + JUGAR)
+    // (después de su animación de entrada de 0,35 s, para medirlo ya con su tamaño final)
+    setTimeout(() => { if (intro.formShown) formEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 400);
+    if (FINE_POINTER) setTimeout(() => inputEl.focus({ preventScroll: true }), 50);
   }
   function hideForm() {
     intro.formShown = false;
@@ -533,15 +574,15 @@
     const sector = k.sector <= 2 ? SECTORS - 1 : 0;
     G.keeper2 = {
       sector, prev: sector, dir: sector === 0 ? 1 : -1,
-      int: FRENZY_STEP, moveStart: -1e9, spawnAt: now, leaveAt: 0,
+      int: FRENZY_STEP, moveStart: -1e9, spawnAt: now,
       pose: 'idle', mouth: 'smile',
     };
     G.keeper2.nextStep = now + nextInterval(G.keeper2);
     if (CHAMP) flash('¡LLEGÓ ' + CHAMP.nombre + '!', 'EL CAMPEÓN DEL 1ER TORNEO', 'champ', 1600);
   }
-  // Al terminar el partido (por tiempo o por roja) el segundo Nico se va: queda uno solo
+  // Al terminar el partido (por tiempo o por roja) el segundo arquero desaparece, sin animación
   function dismissKeeper2() {
-    if (G.keeper2 && !G.keeper2.leaveAt) G.keeper2.leaveAt = now;
+    G.keeper2 = null;
   }
   const keepers = () => (G.keeper2 ? [G.keeper, G.keeper2] : [G.keeper]);
   // Tiempo entre pasos de Nico: según los goles, y muy rápido en los últimos 20 s
@@ -588,7 +629,8 @@
     G.ball = {
       tx: sectorX(G.aim) + Math.round(Math.random() * 10 - 5),
       ty: GOAL.top + 14 + Math.round(Math.random() * 34),
-      start: now, arrive: now + FLIGHT_MS, target: G.aim,
+      // Desde 0:20 el balón va 50 % más rápido (un balón que ya iba en el aire a las 0:20 no cambia)
+      start: now, arrive: now + (G.frenzy ? FRENZY_FLIGHT_MS : FLIGHT_MS), target: G.aim,
     };
     G.phase = 'flight';
     G.phaseAt = now;
@@ -888,13 +930,10 @@
     // Nico
     const k = G.keeper;
     const blink = (now % 2900) < 120;
-    if (G.keeper2 && G.keeper2.leaveAt && now - G.keeper2.leaveAt >= 260) G.keeper2 = null;  // ya se fue
     if (G.keeper2) {
       const k2 = G.keeper2;
       const kv2 = keeperVisual(k2);
-      const drop = k2.leaveAt
-        ? Math.round(Math.min(1, (now - k2.leaveAt) / 260) * 60)                // se va saltando hacia arriba
-        : Math.round(Math.max(0, 1 - (now - k2.spawnAt) / 260) * 40);          // entra cayendo
+      const drop = Math.round(Math.max(0, 1 - (now - k2.spawnAt) / 260) * 40);   // entra cayendo
       const red = G.phase === 'red' && now - G.phaseAt >= REF_IN;
       const hop2 = red ? Math.round(Math.abs(Math.sin(now / 170)) * 4) : kv2.hop;
       const spr2 = red ? keeper2Sprite('up', 'grin', 'happy')
@@ -938,7 +977,7 @@
       drawShadow(g, SPOT.x, SPOT.y + BALL_PX / 2, BALL_PX);
       drawBall(g, SPOT.x, SPOT.y, 1, 0);
     } else if (b && G.phase === 'flight') {
-      const t = clamp((now - b.start) / FLIGHT_MS, 0, 1);
+      const t = clamp((now - b.start) / (b.arrive - b.start), 0, 1);   // cada tiro con su propia duración
       const e = 1 - (1 - t) * (1 - t);
       const x = lerp(SPOT.x, b.tx, e);
       const y = lerp(SPOT.y, b.ty, e) - Math.sin(Math.PI * t) * 10;
